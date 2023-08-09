@@ -294,15 +294,17 @@ def countLines(file):
 # and before the live database is saved as a backup, the current backup is saved as a new file, so that
 # it can be recovered later.
 def dbBackup():
-    if not os.path.isfile(backupPath) or os.stat(backupPath).st_mtime > 86400:
-        if os.path.isfile(backupPath) and countLines(backupPath) < countLines(databasePath):
+    if os.path.isfile(backupPath) and datetime.fromtimestamp(os.stat(backupPath).st_mtime) > datetime.now() - timedelta(hours = 24):
+        return
+    if os.path.isfile(backupPath):
+        if countLines(backupPath) < countLines(databasePath):
             os.remove(backupPath)
-        elif os.path.isfile(backupPath) and countLines(backupPath) > countLines(databasePath):
+        else:
             date = datetime.now().strftime("%y%m%d")
             os.rename(backupPath, backupPath + "_" + date)
             writeLog("Current backup file contains more entries than current live database, backup saved")
-        shutil.copyfile(databasePath, backupPath)
-        writeLog("Backup of database taken")
+    shutil.copyfile(databasePath, backupPath)
+    writeLog("Backup of database taken")
             
 # Here the whole thing is run
 database = jsonRead()
