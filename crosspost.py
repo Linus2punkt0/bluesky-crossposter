@@ -36,10 +36,9 @@ def getPosts():
     # Getting feed of user
     profile_feed = bsky.bsky.feed.get_author_feed({'actor': bsky_handle})
     for feed_view in profile_feed.feed:
+        # Post type "post" means it is not a quote post.
+        postType = "post"
         # If post has an embed of type record it is a quote post, and should not be crossposted
-        if feed_view.post.embed and hasattr(feed_view.post.embed, "record"):
-            continue
-        images = ""
         cid = feed_view.post.cid
         text = feed_view.post.record.text
         timestamp = datetime.strptime(feed_view.post.indexedAt.split(".")[0], date_in_format) + timedelta(hours = 2)
@@ -48,22 +47,58 @@ def getPosts():
         # both tweets that are not replies, and posts that are part of a thread.
         replyToUser = bsky_handle
         replyTo = ""
-        if feed_view.post.record.reply:
+        # Checking if post is a quote tweet
+        if feed_view.post.embed and hasattr(feed_view.post.embed, "record"):
+            replyToUser, replyTo = getQuotePost(feed_view.post.embed.record)
+            postType = "quote"
+        # Checking if post is regular reply
+        elif feed_view.post.record.reply:
             replyToUser = feed_view.reply.parent.author.handle
             replyTo = feed_view.post.record.reply.parent.cid
         # Checking if post is by user (i.e. not a repost), withing the last 12 hours and either not a reply or a reply in a thread.
         if feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = 12) and replyToUser == bsky_handle:
             # Fetching images if there are any in the post
+            images = ""
             if feed_view.post.embed and hasattr(feed_view.post.embed, "images"):
                 images = feed_view.post.embed.images
             postInfo = {
                 "text": text,
                 "replyTo": replyTo,
-                "images": images
+                "images": images,
+                "type": postType
             }
             # Saving post to posts dictionary
             posts[cid] = postInfo;
     return posts
+
+# Function for getting included images. If no images are included, an empty list will be returned, 
+# and the posting functions will know not to include any images.
+def getImages(images):
+    localImages = []
+    for image in images:
+        # Getting alt text for image. If there is none this will be an empty string.
+        alt = image.alt
+        # Giving the image just a random filename
+        filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10)) + ".jpg"
+        filename = imagePath + filename
+        # Downloading fullsize version of image
+        urllib.request.urlretrieve(image.fullsize, filename)
+        # Saving image info in a dictionary and adding it to the list.
+        imageInfo = {
+            "filename": filename,
+            "alt": alt
+        }
+        localImages.append(imageInfo)
+    return localImages
+
+def getQuotePost(post):
+    if isinstance(post, dict):
+        user = post["record"]["author"]["handle"]
+        cid = post["record"]["cid"]
+    else:
+        user = post.author.handle
+        cid = post.cid
+    return user, cid
 
 def post(posts):
     # Running through the posts dictionary reversed, to get oldest posts first.
@@ -78,6 +113,7 @@ def post(posts):
         text = posts[cid]["text"]
         replyTo = posts[cid]["replyTo"]
         images = posts[cid]["images"]
+        postType = posts[cid]["type"]
         tweetReply = ""
         tootReply = ""
         # If it is a reply, we get the IDs of the posts we want to reply to from the database.
@@ -95,10 +131,11 @@ def post(posts):
         # empty string, letting the code know it should try again next time the code is run.
         if not tweetId:
             try:
-                tweetId = tweet(text, tweetReply, images)
+                tweetId = tweet(text, tweetReply, images, postType)
             except Exception as error:
                 print(error)
                 tweetId = ""
+        # Mastodon does not have a quote retweet function, so those will just be sent as replies.
         if not tootId:
             try:
                 tootId = toot(text, tootReply, images)
@@ -109,7 +146,7 @@ def post(posts):
         jsonWrite(cid, tweetId, tootId)
 
 # Function for posting tweets
-def tweet(post, replyTo, images):
+def tweet(post, replyTo, images, postType):
     mediaIds = []
     # If post includes images, images are uploaded so that they can be included in the tweet
     if images:
@@ -125,10 +162,15 @@ def tweet(post, replyTo, images):
                 twitter_images.create_media_metadata(id, alt)
             mediaIds.append(id)
     # I wanted to make this part a little neater, but didn't get it to work and gave up. So here we are.
-    # If post is both reply and has images it is posted as both a reply and with images (duh). 
-    # If just either of the two it is posted with just that, and if neither it is just posted as a text post.
-    if replyTo and mediaIds:
+    # If post is both reply and has images it is posted as both a reply and with images (duh), if it's
+    # a quote with images it's posted as that. If just either of the three it is posted as just that, 
+    # and if neither it is just posted as a text post.
+    if replyTo and mediaIds and postType == "quote":
+        a = twitter.create_tweet(text=post, quote_tweet_id=replyTo, media_ids=mediaIds)
+    elif replyTo and mediaIds:
         a = twitter.create_tweet(text=post, in_reply_to_tweet_id=replyTo, media_ids=mediaIds)
+    elif postType == "quote":
+        a = twitter.create_tweet(text=post, quote_tweet_id=replyTo)
     elif replyTo:
         a = twitter.create_tweet(text=post, in_reply_to_tweet_id=replyTo)
     elif mediaIds:
@@ -170,26 +212,6 @@ def toot(post, replyTo, images):
     writeLog("Posted to mastodon")
     id = a["id"]
     return id
-
-# Function for getting included images. If no images are included, an empty list will be returned, 
-# and the posting functions will know not to include any images.
-def getImages(images):
-    localImages = []
-    for image in images:
-        # Getting alt text for image. If there is none this will be an empty string.
-        alt = image.alt
-        # Giving the image just a random filename
-        filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10)) + ".jpg"
-        filename = imagePath + filename
-        # Downloading fullsize version of image
-        urllib.request.urlretrieve(image.fullsize, filename)
-        # Saving image info in a dictionary and adding it to the list.
-        imageInfo = {
-            "filename": filename,
-            "alt": alt
-        }
-        localImages.append(imageInfo)
-    return localImages
 
 # Function for writing new lines to the database
 def jsonWrite(skeet, tweet, toot):
