@@ -4,6 +4,7 @@ from mastodon import Mastodon
 from datetime import datetime, timedelta
 from auth import *
 from paths import *
+import toggle
 import json, os, urllib.request, random, string, shutil
 
 date_in_format = '%Y-%m-%dT%H:%M:%S'
@@ -16,18 +17,20 @@ bsky.login(bsky_handle, bsky_password)
 # After changes in twitters API we need to use tweepy.Client to make posts as it uses version 2.0 of the API.
 # However, uploading images is still not included in 2.0, so for that we need to use tweepy.API, which uses
 # the previous version.
-twitter = tweepy.Client(consumer_key=TWITTER_APP_KEY,
-                    consumer_secret=TWITTER_APP_SECRET,
-                    access_token=TWITTER_ACCESS_TOKEN,
-                    access_token_secret=TWITTER_ACCESS_TOKEN_SECRET)
+if toggle.Twitter:
+    twitter = tweepy.Client(consumer_key=TWITTER_APP_KEY,
+                        consumer_secret=TWITTER_APP_SECRET,
+                        access_token=TWITTER_ACCESS_TOKEN,
+                        access_token_secret=TWITTER_ACCESS_TOKEN_SECRET)
 
-tweepy_auth = tweepy.OAuth1UserHandler(TWITTER_APP_KEY, TWITTER_APP_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET)
-twitter_images = tweepy.API(tweepy_auth)
+    tweepy_auth = tweepy.OAuth1UserHandler(TWITTER_APP_KEY, TWITTER_APP_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET)
+    twitter_images = tweepy.API(tweepy_auth)
 
-mastodon = Mastodon(
-    access_token = MASTODON_TOKEN,
-    api_base_url = MASTODON_INSTANCE
-)
+if toggle.Mastodon:
+    mastodon = Mastodon(
+        access_token = MASTODON_TOKEN,
+        api_base_url = MASTODON_INSTANCE
+    )
 
 # Getting posts from bluesky
 
@@ -147,6 +150,8 @@ def post(posts):
 
 # Function for posting tweets
 def tweet(post, replyTo, images, postType):
+    if not toggle.Twitter:
+        return;
     mediaIds = []
     # If post includes images, images are uploaded so that they can be included in the tweet
     if images:
@@ -183,6 +188,8 @@ def tweet(post, replyTo, images, postType):
 
 # More or less the exact same function as for tweeting, but for tooting.
 def toot(post, replyTo, images):
+    if not toggle.Mastodon:
+        return;
     mediaIds = []
     # If post includes images, images are uploaded so that they can be included in the toot
     if images:
@@ -264,6 +271,9 @@ def writeLog(message):
     now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     date = datetime.now().strftime("%y%m%d")
     message = str(now) + ": " + message + "\n"
+    print(message)
+    if not toggle.Logging:
+        return;
     log = logPath + date + ".log"
     if os.path.exists(log):
         append_write = 'a'
@@ -271,7 +281,6 @@ def writeLog(message):
         append_write = 'w'
     dst = open(log, append_write)
     dst.write(message)
-    print(message)
     dst.close()
 
 # Cleaning up downloaded images
