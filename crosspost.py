@@ -39,6 +39,12 @@ def getPosts():
     # Getting feed of user
     profile_feed = bsky.bsky.feed.get_author_feed({'actor': bsky_handle})
     for feed_view in profile_feed.feed:
+        # Currently it's not possible to get images included in quote posts due to a limitation
+        # in the atproto python library. While awaiting a fix for that, this function
+        # checks for posts that should have images but which it can't access and if that
+        # is the case we skip the post.
+        if imageFail(feed_view.post):
+            continue;
         # Post type "post" means it is not a quote post.
         postType = "post"
         # If post has an embed of type record it is a quote post, and should not be crossposted
@@ -61,9 +67,15 @@ def getPosts():
         # Checking if post is by user (i.e. not a repost), withing the last 12 hours and either not a reply or a reply in a thread.
         if feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = 12) and replyToUser == bsky_handle:
             # Fetching images if there are any in the post
-            images = ""
+            imageData = ""
+            images = []
             if feed_view.post.embed and hasattr(feed_view.post.embed, "images"):
-                images = feed_view.post.embed.images
+                imageData = feed_view.post.embed.images
+            elif feed_view.post.embed and hasattr(feed_view.post.embed, "media") and postType == "quote":
+                imageData = feed_view.post.embed.media.images
+            if imageData:
+                for image in imageData:
+                    images.append({"url": image.fullsize, "alt": image.alt})
             postInfo = {
                 "text": text,
                 "replyTo": replyTo,
@@ -80,12 +92,12 @@ def getImages(images):
     localImages = []
     for image in images:
         # Getting alt text for image. If there is none this will be an empty string.
-        alt = image.alt
+        alt = image["alt"]
         # Giving the image just a random filename
         filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10)) + ".jpg"
         filename = imagePath + filename
         # Downloading fullsize version of image
-        urllib.request.urlretrieve(image.fullsize, filename)
+        urllib.request.urlretrieve(image["url"], filename)
         # Saving image info in a dictionary and adding it to the list.
         imageInfo = {
             "filename": filename,
@@ -98,10 +110,20 @@ def getQuotePost(post):
     if isinstance(post, dict):
         user = post["record"]["author"]["handle"]
         cid = post["record"]["cid"]
-    else:
+    elif hasattr(post, "author"):
         user = post.author.handle
         cid = post.cid
+    else:
+        user = post.record.author.handle
+        cid = post.record.cid
     return user, cid
+
+def imageFail(post):
+    if (post.embed and (hasattr(post.record.embed, "image") or hasattr(post.record.embed, "media"))
+        and not hasattr(post.embed, "images")):
+        return True
+    else:
+        return False
 
 def post(posts):
     # Running through the posts dictionary reversed, to get oldest posts first.
