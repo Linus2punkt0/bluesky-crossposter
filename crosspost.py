@@ -188,8 +188,12 @@ def tweet(post, replyTo, images, postType):
                 writeLog("Uploading image " + filename + " with alt: " + alt + " to twitter")
                 twitter_images.create_media_metadata(id, alt)
             mediaIds.append(id)
+    # Checking if the post is longer than 280 characters, and if so sending to the
+    # splitPost-function.
+    partTwo = ""
     if len(post) > 280:
         post, partTwo = splitPost(post)
+    # If the function does not return a post, splitting failed and we will skip this post.
     if not post:
         return "Too_long_post"
     # I wanted to make this part a little neater, but didn't get it to work and gave up. So here we are.
@@ -251,12 +255,15 @@ def toot(post, replyTo, images):
 
 def splitPost(text):
     first = text
+    # We first try to split the post into sentences, and send as many as can fit in the first one,
+    # and the rest in the second.
     sentences = text.split(".")
     i = 1
     while len(first) > 280 and i < len(sentences):
         first = ".".join(sentences[:(len(sentences) - i)]) + "."
         second = ".".join(sentences[(len(sentences) - i):])
         i += 1
+    # If splitting by sentance does not result in a short enough post, we try splitting by words instead.
     if len(first) > 280:
         first = text
         words = text.split(" ")
@@ -265,7 +272,9 @@ def splitPost(text):
             first = " ".join(words[:(len(words) - i)])
             second = " ".join(words[(len(words) - i):])
             i += 1
-    if len(first) > 280:
+    # If splitting has ended up with either a first or second part that is too long, we return empty
+    # strings and the post is not sent to twitter.
+    if len(first) > 280 or len(second) > 280:
         writeLog("Was not able to split post.")
         first = ""
         second = ""
