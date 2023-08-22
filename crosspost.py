@@ -330,7 +330,7 @@ def isInDB(line):
 def writeLog(message):
     now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     date = datetime.now().strftime("%y%m%d")
-    message = str(now) + ": " + message + "\n"
+    message = str(now) + ": " + str(message) + "\n"
     print(message)
     if not toggle.Logging:
         return;
