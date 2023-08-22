@@ -154,18 +154,18 @@ def post(posts):
             images = getImages(images)
         # Trying to post to twitter and mastodon. If posting fails the post ID for each service is set to an
         # empty string, letting the code know it should try again next time the code is run.
-        if not tweetId:
+        if not tweetId and tweetReply != "Too_long_post":
             try:
                 tweetId = tweet(text, tweetReply, images, postType)
             except Exception as error:
-                print(error)
+                writeLog(error)
                 tweetId = ""
         # Mastodon does not have a quote retweet function, so those will just be sent as replies.
         if not tootId:
             try:
                 tootId = toot(text, tootReply, images)
             except Exception as error:
-                print(error)
+                writeLog(error)
                 tootId = ""
         # Saving post to database
         jsonWrite(cid, tweetId, tootId)
@@ -188,6 +188,10 @@ def tweet(post, replyTo, images, postType):
                 writeLog("Uploading image " + filename + " with alt: " + alt + " to twitter")
                 twitter_images.create_media_metadata(id, alt)
             mediaIds.append(id)
+    if len(post) > 280:
+        post, partTwo = splitPost(post)
+    if not post:
+        return "Too_long_post"
     # I wanted to make this part a little neater, but didn't get it to work and gave up. So here we are.
     # If post is both reply and has images it is posted as both a reply and with images (duh), if it's
     # a quote with images it's posted as that. If just either of the three it is posted as just that, 
@@ -206,6 +210,9 @@ def tweet(post, replyTo, images, postType):
         a = twitter.create_tweet(text=post)
     writeLog("Posted to twitter")
     id = a[0]["id"]
+    if partTwo:
+        a = twitter.create_tweet(text=partTwo, in_reply_to_tweet_id=id)
+        id = a[0]["id"]
     return id
 
 # More or less the exact same function as for tweeting, but for tooting.
@@ -241,6 +248,28 @@ def toot(post, replyTo, images):
     writeLog("Posted to mastodon")
     id = a["id"]
     return id
+
+def splitPost(text):
+    first = text
+    sentences = text.split(".")
+    i = 1
+    while len(first) > 280 and i < len(sentences):
+        first = ".".join(sentences[:(len(sentences) - i)]) + "."
+        second = ".".join(sentences[(len(sentences) - i):])
+        i += 1
+    if len(first) > 280:
+        first = text
+        words = text.split(" ")
+        i = 1
+        while len(first) > 280 and i < len(words):
+            first = " ".join(words[:(len(words) - i)])
+            second = " ".join(words[(len(words) - i):])
+            i += 1
+    if len(first) > 280:
+        writeLog("Was not able to split post.")
+        first = ""
+        second = ""
+    return first, second
 
 # Function for writing new lines to the database
 def jsonWrite(skeet, tweet, toot):
