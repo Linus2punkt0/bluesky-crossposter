@@ -62,8 +62,11 @@ def getPosts():
             postType = "quote"
         # Checking if post is regular reply
         elif feed_view.post.record.reply:
-            replyToUser = feed_view.reply.parent.author.handle
+            replyToUser = getReplyToUser(feed_view.post.record.reply)
             replyTo = feed_view.post.record.reply.parent.cid
+        # If unable to fetch user that was replied to, code will skip this post.
+        if not replyToUser:
+            continue
         # Checking if post is by user (i.e. not a repost), withing the last 12 hours and either not a reply or a reply in a thread.
         if feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = 12) and replyToUser == bsky_handle:
             # Fetching images if there are any in the post
@@ -85,6 +88,18 @@ def getPosts():
             # Saving post to posts dictionary
             posts[cid] = postInfo;
     return posts
+
+# Function for getting username of person replied to. It can mostly be retrieved from the reply section of the tweet that has been fetched,
+# but in cases where the original post in a thread has been deleted it causes some weirdness. Hopefully this resolves it.
+def getReplyToUser(reply):
+    uri = reply.parent.uri
+    username = ""
+    try: 
+        response = bsky.bsky.feed.get_post_thread(params={"uri": uri})
+        username = response.thread.post.author.handle
+    except:
+        writeLog("Unable to retrieve replyTo-user.")
+    return username
 
 # Function for getting included images. If no images are included, an empty list will be returned, 
 # and the posting functions will know not to include any images.
