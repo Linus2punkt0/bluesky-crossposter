@@ -35,6 +35,7 @@ if toggle.Mastodon:
 # Getting posts from bluesky
 
 def getPosts():
+    writeLog("Gathering posts")
     posts = {}
     # Getting feed of user
     profile_feed = bsky.bsky.feed.get_author_feed({'actor': bsky_handle})
@@ -50,6 +51,9 @@ def getPosts():
         # If post has an embed of type record it is a quote post, and should not be crossposted
         cid = feed_view.post.cid
         text = feed_view.post.record.text
+        # Sometimes bluesky shortens URLs and in that case we need to restore them before crossposting
+        if feed_view.post.record.facets and "..." in feed_view.post.record.text:
+            text = restoreUrls(feed_view.post.record)
         langs = feed_view.post.record.langs
         timestamp = datetime.strptime(feed_view.post.indexedAt.split(".")[0], date_in_format) + timedelta(hours = 2)
         # Setting replyToUser to the same as user handle and only changing it if the tweet is an actual reply.
@@ -123,6 +127,21 @@ def getImages(images):
         localImages.append(imageInfo)
     return localImages
 
+# Function for restoring shortened URLS
+def restoreUrls(record):
+    text = record.text
+    encodedText = text.encode("UTF-8")
+    for facet in record.facets:
+        url = facet.features[0].uri
+        # The index section designates where a URL starts end ends. Using this we can pick out the exact
+        # string representing the URL in the post, and replace it with the actual URL.
+        start = facet.index.byteStart
+        end = facet.index.byteEnd
+        section = encodedText[start:end]
+        shortened = section.decode("UTF-8")
+        text = text.replace(shortened, url)
+    return text
+
 def getQuotePost(post):
     if isinstance(post, dict):
         user = post["record"]["author"]["handle"]
@@ -168,7 +187,7 @@ def post(posts):
         elif replyTo and replyTo not in database:
             continue
         # If either tweet or toot has not previously been posted, we download images (given the post includes images).
-        if not tweetId or not tootId:
+        if images and (not tweetId or not tootId):
             images = getImages(images)
         # Trying to post to twitter and mastodon. If posting fails the post ID for each service is set to an
         # empty string, letting the code know it should try again next time the code is run.
@@ -199,7 +218,7 @@ def langToggle(langs, service):
         exit()
     if not langToggle:
         return True
-    if langToggle in langs:
+    if langs and langToggle in langs:
         return (not toggle.postDefault)
     else:
         return toggle.postDefault
@@ -288,6 +307,7 @@ def toot(post, replyTo, images, doPost):
     return id
 
 def splitPost(text):
+    writeLog("Splitting post that is too long for twitter.")
     first = text
     # We first try to split the post into sentences, and send as many as can fit in the first one,
     # and the rest in the second.
@@ -379,6 +399,7 @@ def writeLog(message):
 
 # Cleaning up downloaded images
 def cleanup():
+    writeLog("Deleting local images")
     for filename in os.listdir(imagePath):
         file_path = os.path.join(imagePath, filename)
         try:
