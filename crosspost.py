@@ -35,6 +35,7 @@ if toggle.Mastodon:
 # Getting posts from bluesky
 
 def getPosts():
+    writeLog("Gathering posts")
     posts = {}
     # Getting feed of user
     profile_feed = bsky.bsky.feed.get_author_feed({'actor': bsky_handle})
@@ -50,6 +51,10 @@ def getPosts():
         # If post has an embed of type record it is a quote post, and should not be crossposted
         cid = feed_view.post.cid
         text = feed_view.post.record.text
+        # Sometimes bluesky shortens URLs and in that case we need to restore them before crossposting
+        if feed_view.post.record.facets and "..." in feed_view.post.record.text:
+            text = restoreUrls(feed_view.post.record)
+        langs = feed_view.post.record.langs
         timestamp = datetime.strptime(feed_view.post.indexedAt.split(".")[0], date_in_format) + timedelta(hours = 2)
         # Setting replyToUser to the same as user handle and only changing it if the tweet is an actual reply.
         # This way we can just check if the variable is the same as the user handle later and send through
@@ -83,7 +88,8 @@ def getPosts():
                 "text": text,
                 "replyTo": replyTo,
                 "images": images,
-                "type": postType
+                "type": postType,
+                "langs": langs
             }
             # Saving post to posts dictionary
             posts[cid] = postInfo;
@@ -121,6 +127,21 @@ def getImages(images):
         localImages.append(imageInfo)
     return localImages
 
+# Function for restoring shortened URLS
+def restoreUrls(record):
+    text = record.text
+    encodedText = text.encode("UTF-8")
+    for facet in record.facets:
+        url = facet.features[0].uri
+        # The index section designates where a URL starts end ends. Using this we can pick out the exact
+        # string representing the URL in the post, and replace it with the actual URL.
+        start = facet.index.byteStart
+        end = facet.index.byteEnd
+        section = encodedText[start:end]
+        shortened = section.decode("UTF-8")
+        text = text.replace(shortened, url)
+    return text
+
 def getQuotePost(post):
     if isinstance(post, dict):
         user = post["record"]["author"]["handle"]
@@ -154,6 +175,7 @@ def post(posts):
         replyTo = posts[cid]["replyTo"]
         images = posts[cid]["images"]
         postType = posts[cid]["type"]
+        langs = postType = posts[cid]["langs"]
         tweetReply = ""
         tootReply = ""
         # If it is a reply, we get the IDs of the posts we want to reply to from the database.
@@ -165,30 +187,46 @@ def post(posts):
         elif replyTo and replyTo not in database:
             continue
         # If either tweet or toot has not previously been posted, we download images (given the post includes images).
-        if not tweetId or not tootId:
+        if images and (not tweetId or not tootId):
             images = getImages(images)
         # Trying to post to twitter and mastodon. If posting fails the post ID for each service is set to an
         # empty string, letting the code know it should try again next time the code is run.
-        if not tweetId and tweetReply != "Too_long_post":
+        if not tweetId and tweetReply != "skipped":
             try:
-                tweetId = tweet(text, tweetReply, images, postType)
+                tweetId = tweet(text, tweetReply, images, postType, langToggle(langs, "twitter"))
             except Exception as error:
                 writeLog(error)
                 tweetId = ""
         # Mastodon does not have a quote retweet function, so those will just be sent as replies.
-        if not tootId:
+        if not tootId and tootReply != "skipped":
             try:
-                tootId = toot(text, tootReply, images)
+                tootId = toot(text, tootReply, images, langToggle(langs, "mastodon"))
             except Exception as error:
                 writeLog(error)
                 tootId = ""
         # Saving post to database
         jsonWrite(cid, tweetId, tootId)
 
+# This function uses the language selection as a way to select which posts should be crossposted.
+def langToggle(langs, service):
+    if service == "twitter":
+        langToggle = toggle.twitterLang
+    elif service == "mastodon":
+        langToggle = toggle.mastodonLang
+    else:
+        writeLog("Something has gone very wrong")
+        exit()
+    if not langToggle:
+        return True
+    if langs and langToggle in langs:
+        return (not toggle.postDefault)
+    else:
+        return toggle.postDefault
+
 # Function for posting tweets
-def tweet(post, replyTo, images, postType):
-    if not toggle.Twitter:
-        return;
+def tweet(post, replyTo, images, postType, doPost):
+    if not toggle.Twitter or not doPost:
+        return "skipped";
     mediaIds = []
     # If post includes images, images are uploaded so that they can be included in the tweet
     if images:
@@ -210,7 +248,7 @@ def tweet(post, replyTo, images, postType):
         post, partTwo = splitPost(post)
     # If the function does not return a post, splitting failed and we will skip this post.
     if not post:
-        return "Too_long_post"
+        return "skipped"
     # I wanted to make this part a little neater, but didn't get it to work and gave up. So here we are.
     # If post is both reply and has images it is posted as both a reply and with images (duh), if it's
     # a quote with images it's posted as that. If just either of the three it is posted as just that, 
@@ -235,9 +273,9 @@ def tweet(post, replyTo, images, postType):
     return id
 
 # More or less the exact same function as for tweeting, but for tooting.
-def toot(post, replyTo, images):
-    if not toggle.Mastodon:
-        return;
+def toot(post, replyTo, images, doPost):
+    if not toggle.Mastodon or not doPost:
+        return "skipped";
     mediaIds = []
     # If post includes images, images are uploaded so that they can be included in the toot
     if images:
@@ -269,6 +307,7 @@ def toot(post, replyTo, images):
     return id
 
 def splitPost(text):
+    writeLog("Splitting post that is too long for twitter.")
     first = text
     # We first try to split the post into sentences, and send as many as can fit in the first one,
     # and the rest in the second.
@@ -362,6 +401,7 @@ def writeLog(message):
 
 # Cleaning up downloaded images
 def cleanup():
+    writeLog("Deleting local images")
     for filename in os.listdir(imagePath):
         file_path = os.path.join(imagePath, filename)
         try:
