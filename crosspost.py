@@ -63,15 +63,14 @@ def getPosts():
         replyTo = ""
         # Checking if post is a quote post. Posts with references to feeds look like quote posts but aren't, and so will fail on missing attribute.
         # Since quote posts can give values in two different ways it's a bit of a hassle to double check if it is an actual quote post,
-        # so instead I just try to run the function and if it fails I'll set postType as an empty string to signify that this post should
-        # not be crossposted. If there is some reason you would want to crosspost a post referencing a bluesky-feed that I'm not
-        # seeing, I might update this in the future.
+        # so instead I just try to run the function and if it fails the post is skipped.
+        # If there is some reason you would want to crosspost a post referencing a bluesky-feed that I'm not seeing, I might update this in the future.
         if feed_view.post.embed and hasattr(feed_view.post.embed, "record"):
             try:
                 replyToUser, replyTo = getQuotePost(feed_view.post.embed.record)
                 postType = "quote"
             except:
-                postType = ""
+                continue
         # Checking if post is regular reply
         elif feed_view.post.record.reply:
             replyToUser = getReplyToUser(feed_view.post.record.reply)
@@ -80,7 +79,7 @@ def getPosts():
         if not replyToUser:
             continue
         # Checking if post is by user (i.e. not a repost), withing the last 12 hours and either not a reply or a reply in a thread.
-        if postType and feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = 12) and replyToUser == bsky_handle:
+        if feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = 12) and replyToUser == bsky_handle:
             # Fetching images if there are any in the post
             imageData = ""
             images = []
