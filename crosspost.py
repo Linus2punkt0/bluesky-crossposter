@@ -76,7 +76,8 @@ def getPosts():
             replyToUser = getReplyToUser(feed_view.post.record.reply)
             replyTo = feed_view.post.record.reply.parent.cid
         # If unable to fetch user that was replied to, code will skip this post.
-        if not replyToUser:
+        if (postType == "reply" or postType == "quote") and not replyToUser:
+            writeLog("Unable to find the user that this post replies to or quotes")
             continue
         # Checking if post is by user (i.e. not a repost), withing the last 12 hours and either not a reply or a reply in a thread.
         if feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = 12) and replyToUser == bsky_handle:
