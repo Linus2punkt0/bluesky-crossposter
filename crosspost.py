@@ -381,7 +381,7 @@ def jsonRead():
 # Function for checking if a line is already in the database-file
 def isInDB(line):
      if not os.path.exists(databasePath):
-         return False
+        return false
      with open(databasePath, 'r') as file:
         content = file.read()
         if line in content:
