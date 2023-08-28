@@ -21,3 +21,5 @@ postDefault = True
 # Accepted values: Any language tag in quotes (https://en.wikipedia.org/wiki/IETF_language_tag)
 mastodonLang = ""
 twitterLang = ""
+# Sets maximum amount of times poster will retry a failed crosspost.
+maxRetries = 5

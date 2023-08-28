@@ -4,7 +4,7 @@ from mastodon import Mastodon
 from datetime import datetime, timedelta
 from auth import *
 from paths import *
-import toggle
+import settings
 import json, os, urllib.request, random, string, shutil
 
 date_in_format = '%Y-%m-%dT%H:%M:%S'
@@ -17,7 +17,7 @@ bsky.login(bsky_handle, bsky_password)
 # After changes in twitters API we need to use tweepy.Client to make posts as it uses version 2.0 of the API.
 # However, uploading images is still not included in 2.0, so for that we need to use tweepy.API, which uses
 # the previous version.
-if toggle.Twitter:
+if settings.Twitter:
     twitter = tweepy.Client(consumer_key=TWITTER_APP_KEY,
                         consumer_secret=TWITTER_APP_SECRET,
                         access_token=TWITTER_ACCESS_TOKEN,
@@ -26,7 +26,7 @@ if toggle.Twitter:
     tweepy_auth = tweepy.OAuth1UserHandler(TWITTER_APP_KEY, TWITTER_APP_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET)
     twitter_images = tweepy.API(tweepy_auth)
 
-if toggle.Mastodon:
+if settings.Mastodon:
     mastodon = Mastodon(
         access_token = MASTODON_TOKEN,
         api_base_url = MASTODON_INSTANCE
@@ -45,6 +45,7 @@ def getPosts():
         # checks for posts that should have images but which it can't access and if that
         # is the case we skip the post.
         if imageFail(feed_view.post):
+            writeLog("Post includes images, but images could not be accessed.")
             continue;
         # Post type "post" means it is not a quote post.
         postType = "post"
@@ -63,20 +64,21 @@ def getPosts():
         replyTo = ""
         # Checking if post is a quote post. Posts with references to feeds look like quote posts but aren't, and so will fail on missing attribute.
         # Since quote posts can give values in two different ways it's a bit of a hassle to double check if it is an actual quote post,
-        # so instead I just try to run the function and if it fails the post is skipped.
+        # so instead I just try to run the function and if it fails I skip the post
         # If there is some reason you would want to crosspost a post referencing a bluesky-feed that I'm not seeing, I might update this in the future.
         if feed_view.post.embed and hasattr(feed_view.post.embed, "record"):
             try:
                 replyToUser, replyTo = getQuotePost(feed_view.post.embed.record)
                 postType = "quote"
             except:
+                writeLog("Post is of a type the crossposter can't parse.")
                 continue
         # Checking if post is regular reply
         elif feed_view.post.record.reply:
             replyToUser = getReplyToUser(feed_view.post.record.reply)
             replyTo = feed_view.post.record.reply.parent.cid
         # If unable to fetch user that was replied to, code will skip this post.
-        if (postType == "reply" or postType == "quote") and not replyToUser:
+        if not replyToUser:
             writeLog("Unable to find the user that this post replies to or quotes")
             continue
         # Checking if post is by user (i.e. not a repost), withing the last 12 hours and either not a reply or a reply in a thread.
@@ -169,15 +171,31 @@ def imageFail(post):
         return False
 
 def post(posts):
+    # The updates status is set to false until anything has been altered in the databse. If nothing has been posted in a run, we skip resaving the database.
+    updates = False
     # Running through the posts dictionary reversed, to get oldest posts first.
     for cid in reversed(list(posts.keys())):
         # Checking if the post is already in the database, and in that case getting the IDs for the post
         # on twitter and mastodon. If one or both of these IDs are empty, post will be sent.
         tweetId = ""
         tootId = ""
+        tFail = 0
+        mFail = 0
         if cid in database:
-            tweetId = database[cid]["twitterId"]
-            tootId = database[cid]["mastodonId"]
+            tweetId = database[cid]["ids"]["twitterId"]
+            tootId = database[cid]["ids"]["mastodonId"]
+            tFail = database[cid]["failed"]["twitter"]
+            mFail = database[cid]["failed"]["mastodon"]
+        if mFail >= settings.maxRetries:
+            writeLog("Error limit reached, not posting to Mastodon")
+            if not tootId:
+                updates = True
+                tootId = "FailedToPost"
+        if tFail >= settings.maxRetries:
+            writeLog("Error limit reached, not posting to Twitter")
+            if not tweetId:
+                updates = True
+                tweetId = "FailedToPost"
         text = posts[cid]["text"]
         replyTo = posts[cid]["replyTo"]
         images = posts[cid]["images"]
@@ -189,50 +207,56 @@ def post(posts):
         # If post is not found in database, we can't continue the thread on mastodon and twitter,
         # and so we skip it.
         if replyTo in database:
-            tweetReply = database[replyTo]["twitterId"]
-            tootReply = database[replyTo]["mastodonId"]
+            tweetReply = database[replyTo]["ids"]["twitterId"]
+            tootReply = database[replyTo]["ids"]["mastodonId"]
         elif replyTo and replyTo not in database:
+            writeLog("Post was a reply to a post that is not in the database.")
             continue
         # If either tweet or toot has not previously been posted, we download images (given the post includes images).
         if images and (not tweetId or not tootId):
             images = getImages(images)
         # Trying to post to twitter and mastodon. If posting fails the post ID for each service is set to an
         # empty string, letting the code know it should try again next time the code is run.
-        if not tweetId and tweetReply != "skipped":
+        if not tweetId and tweetReply != "skipped" and tweetReply != "FailedToPost":
+            updates = True
             try:
                 tweetId = tweet(text, tweetReply, images, postType, langToggle(langs, "twitter"))
             except Exception as error:
                 writeLog(error)
+                tFail += 1
                 tweetId = ""
         # Mastodon does not have a quote retweet function, so those will just be sent as replies.
-        if not tootId and tootReply != "skipped":
+        if not tootId and tootReply != "skipped" and tootReply != "FailedToPost":
+            updates = True
             try:
                 tootId = toot(text, tootReply, images, langToggle(langs, "mastodon"))
             except Exception as error:
                 writeLog(error)
+                mFail += 1
                 tootId = ""
         # Saving post to database
-        jsonWrite(cid, tweetId, tootId)
+        jsonWrite(cid, tweetId, tootId, {"twitter": tFail, "mastodon": mFail})
+    return updates
 
 # This function uses the language selection as a way to select which posts should be crossposted.
 def langToggle(langs, service):
     if service == "twitter":
-        langToggle = toggle.twitterLang
+        langToggle = settings.twitterLang
     elif service == "mastodon":
-        langToggle = toggle.mastodonLang
+        langToggle = settings.mastodonLang
     else:
         writeLog("Something has gone very wrong")
         exit()
     if not langToggle:
         return True
     if langs and langToggle in langs:
-        return (not toggle.postDefault)
+        return (not settings.postDefault)
     else:
-        return toggle.postDefault
+        return settings.postDefault
 
 # Function for posting tweets
 def tweet(post, replyTo, images, postType, doPost):
-    if not toggle.Twitter or not doPost:
+    if not settings.Twitter or not doPost:
         return "skipped";
     mediaIds = []
     # If post includes images, images are uploaded so that they can be included in the tweet
@@ -281,7 +305,7 @@ def tweet(post, replyTo, images, postType, doPost):
 
 # More or less the exact same function as for tweeting, but for tooting.
 def toot(post, replyTo, images, doPost):
-    if not toggle.Mastodon or not doPost:
+    if not settings.Mastodon or not doPost:
         return "skipped";
     mediaIds = []
     # If post includes images, images are uploaded so that they can be included in the toot
@@ -342,18 +366,23 @@ def splitPost(text):
     return first, second
 
 # Function for writing new lines to the database
-def jsonWrite(skeet, tweet, toot):
+def jsonWrite(skeet, tweet, toot, failed):
     ids = { 
         "twitterId": tweet,
         "mastodonId": toot
     }
+    data = {
+        "ids": ids,
+        "failed": failed
+    }
     # When running, the code saves the database to memory, so instead of just saving the post to the database file,
     # we also save it to the open database. This also overwrites the version of the post in memory in case
     # an ID that was missing because of a previous failure. 
-    database[skeet] = ids
+    database[skeet] = data
     row = {
         "skeet": skeet,
-        "ids": ids
+        "ids": ids,
+        "failed": failed
         }
     jsonString = json.dumps(row)
     # If the database file exists we want to append to it, otherwise we create it anew.
@@ -371,17 +400,29 @@ def jsonWrite(skeet, tweet, toot):
 # Function for reading database file and saving values in a dictionary
 def jsonRead():
     database = {}
-    if os.path.exists(databasePath):
-        with open(databasePath, 'r') as file:
-            for line in file:
-                jsonLine = json.loads(line)
-                database[jsonLine["skeet"]] = jsonLine["ids"]
+    if not os.path.exists(databasePath):
+        return
+    with open(databasePath, 'r') as file:
+        for line in file:
+            jsonLine = json.loads(line)
+            skeet = jsonLine["skeet"]
+            ids = jsonLine["ids"]
+            failed = {"twitter": 0, "mastodon": 0}
+            if "failed" in jsonLine:
+                failed = jsonLine["failed"]
+            lineData = {
+                "ids": ids,
+                "failed": failed
+            }
+            database[skeet] = lineData
+
+        
     return database;
 
 # Function for checking if a line is already in the database-file
 def isInDB(line):
      if not os.path.exists(databasePath):
-        return false
+         return False
      with open(databasePath, 'r') as file:
         content = file.read()
         if line in content:
@@ -395,7 +436,7 @@ def writeLog(message):
     date = datetime.now().strftime("%y%m%d")
     message = str(now) + ": " + str(message) + "\n"
     print(message)
-    if not toggle.Logging:
+    if not settings.Logging:
         return;
     log = logPath + date + ".log"
     if os.path.exists(log):
@@ -429,7 +470,8 @@ def saveDB():
     for skeet in database:
         row = {
             "skeet": skeet,
-            "ids": database[skeet]
+            "ids": database[skeet]["ids"],
+            "failed": database[skeet]["failed"]
         }
         jsonString = json.dumps(row)
         file = open(databasePath, append_write)
@@ -464,9 +506,10 @@ def dbBackup():
 # Here the whole thing is run
 database = jsonRead()
 posts = getPosts()
-post(posts)
-saveDB()
-cleanup()
+updates = post(posts)
+if updates:
+    saveDB()
+    cleanup()
 dbBackup()
 if not posts:
 	writeLog("No new posts found.")
