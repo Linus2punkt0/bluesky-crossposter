@@ -200,7 +200,7 @@ def post(posts):
         replyTo = posts[cid]["replyTo"]
         images = posts[cid]["images"]
         postType = posts[cid]["type"]
-        langs = postType = posts[cid]["langs"]
+        langs = posts[cid]["langs"]
         tweetReply = ""
         tootReply = ""
         # If it is a reply, we get the IDs of the posts we want to reply to from the database.
@@ -286,7 +286,7 @@ def tweet(post, replyTo, images, postType, doPost):
     # and if neither it is just posted as a text post.
     if replyTo and mediaIds and postType == "quote":
         a = twitter.create_tweet(text=post, quote_tweet_id=replyTo, media_ids=mediaIds)
-    elif replyTo and mediaIds:
+    elif replyTo and mediaIds and postType == "reply":
         a = twitter.create_tweet(text=post, in_reply_to_tweet_id=replyTo, media_ids=mediaIds)
     elif postType == "quote":
         a = twitter.create_tweet(text=post, quote_tweet_id=replyTo)
