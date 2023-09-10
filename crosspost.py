@@ -38,15 +38,8 @@ def getPosts():
     writeLog("Gathering posts")
     posts = {}
     # Getting feed of user
-    profile_feed = bsky.bsky.feed.get_author_feed({'actor': bsky_handle})
+    profile_feed = bsky.app.bsky.feed.get_author_feed({'actor': bsky_handle})
     for feed_view in profile_feed.feed:
-        # Currently it's not possible to get images included in quote posts due to a limitation
-        # in the atproto python library. While awaiting a fix for that, this function
-        # checks for posts that should have images but which it can't access and if that
-        # is the case we skip the post.
-        if imageFail(feed_view.post):
-            writeLog("Post includes images, but images could not be accessed.")
-            continue;
         # Post type "post" means it is not a quote post.
         postType = "post"
         # If post has an embed of type record it is a quote post, and should not be crossposted
@@ -56,7 +49,7 @@ def getPosts():
         if feed_view.post.record.facets and "..." in feed_view.post.record.text:
             text = restoreUrls(feed_view.post.record)
         langs = feed_view.post.record.langs
-        timestamp = datetime.strptime(feed_view.post.indexedAt.split(".")[0], date_in_format) + timedelta(hours = 2)
+        timestamp = datetime.strptime(feed_view.post.indexed_at.split(".")[0], date_in_format) + timedelta(hours = 2)
         # Setting replyToUser to the same as user handle and only changing it if the tweet is an actual reply.
         # This way we can just check if the variable is the same as the user handle later and send through
         # both tweets that are not replies, and posts that are part of a thread.
@@ -74,9 +67,15 @@ def getPosts():
                 writeLog("Post is of a type the crossposter can't parse.")
                 continue
         # Checking if post is regular reply
-        elif feed_view.post.record.reply:
-            replyToUser = getReplyToUser(feed_view.post.record.reply)
-            replyTo = feed_view.post.record.reply.parent.cid
+        elif feed_view.reply:
+            replyTo = feed_view.reply.parent.cid
+            # Poster will try to fetch reply to-username the "ordinary" way, 
+            # and if it fails, it will try getting the entire thread and
+            # finding it that way
+            try:
+                replyToUser = feed_view.reply.parent.author.handle
+            except:
+                replyToUser = getReplyToUser(feed_view.post.record.reply.parent)
         # If unable to fetch user that was replied to, code will skip this post.
         if not replyToUser:
             writeLog("Unable to find the user that this post replies to or quotes")
@@ -107,7 +106,7 @@ def getPosts():
 # Function for getting username of person replied to. It can mostly be retrieved from the reply section of the tweet that has been fetched,
 # but in cases where the original post in a thread has been deleted it causes some weirdness. Hopefully this resolves it.
 def getReplyToUser(reply):
-    uri = reply.parent.uri
+    uri = reply.uri
     username = ""
     try: 
         response = bsky.bsky.feed.get_post_thread(params={"uri": uri})
@@ -144,8 +143,8 @@ def restoreUrls(record):
         url = facet.features[0].uri
         # The index section designates where a URL starts end ends. Using this we can pick out the exact
         # string representing the URL in the post, and replace it with the actual URL.
-        start = facet.index.byteStart
-        end = facet.index.byteEnd
+        start = facet.index.byte_start
+        end = facet.index.byte_end
         section = encodedText[start:end]
         shortened = section.decode("UTF-8")
         text = text.replace(shortened, url)
@@ -163,6 +162,7 @@ def getQuotePost(post):
         cid = post.record.cid
     return user, cid
 
+# Deprecated function
 def imageFail(post):
     if (post.embed and (hasattr(post.record.embed, "image") or hasattr(post.record.embed, "media"))
         and not hasattr(post.embed, "images")):
@@ -265,6 +265,8 @@ def tweet(post, replyTo, images, postType, doPost):
         for image in images:
             filename = image["filename"]
             alt = image["alt"]
+            if len(alt) > 1000:
+                alt = alt[:996] + "..."
             res = twitter_images.media_upload(filename)
             id = res.media_id
             # If alt text was added to the image on bluesky, it's also added to the image on twitter.
@@ -337,6 +339,7 @@ def toot(post, replyTo, images, doPost):
     id = a["id"]
     return id
 
+# Function for splitting up posts that are too long for twitter.
 def splitPost(text):
     writeLog("Splitting post that is too long for twitter.")
     first = text
