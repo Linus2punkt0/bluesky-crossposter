@@ -80,8 +80,8 @@ def getPosts():
         if not replyToUser:
             writeLog("Unable to find the user that this post replies to or quotes")
             continue
-        # Checking if post is by user (i.e. not a repost), withing the last 12 hours and either not a reply or a reply in a thread.
-        if feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = 12) and replyToUser == bsky_handle:
+        # Checking if post is by user (i.e. not a repost), withing timelimit and either not a reply or a reply in a thread.
+        if feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = settings.postTimeLimit) and replyToUser == bsky_handle:
             # Fetching images if there are any in the post
             imageData = ""
             images = []
