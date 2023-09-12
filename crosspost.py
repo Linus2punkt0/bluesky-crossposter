@@ -48,7 +48,6 @@ def getPosts():
         # Sometimes bluesky shortens URLs and in that case we need to restore them before crossposting
         if feed_view.post.record.facets:
             text = restoreUrls(feed_view.post.record)
-        
         langs = feed_view.post.record.langs
         timestamp = datetime.strptime(feed_view.post.indexed_at.split(".")[0], date_in_format) + timedelta(hours = 2)
         # Setting replyToUser to the same as user handle and only changing it if the tweet is an actual reply.
@@ -141,6 +140,8 @@ def restoreUrls(record):
     text = record.text
     encodedText = text.encode("UTF-8")
     for facet in record.facets:
+        if facet.py_type != "app.bsky.richtext.facet#link":
+            continue
         url = facet.features[0].uri
         # The index section designates where a URL starts end ends. Using this we can pick out the exact
         # string representing the URL in the post, and replace it with the actual URL.
