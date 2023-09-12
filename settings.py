@@ -23,3 +23,6 @@ mastodonLang = ""
 twitterLang = ""
 # Sets maximum amount of times poster will retry a failed crosspost.
 maxRetries = 5
+# Sets max time limit (in hours) for fetching posts. If no database exists, all posts within this time 
+# period will be posted.
+postTimeLimit = 12
