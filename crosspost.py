@@ -496,7 +496,8 @@ def countLines(file):
 # and before the live database is saved as a backup, the current backup is saved as a new file, so that
 # it can be recovered later.
 def dbBackup():
-    if os.path.isfile(backupPath) and datetime.fromtimestamp(os.stat(backupPath).st_mtime) > datetime.now() - timedelta(hours = 24):
+    if not os.path.isfile(databasePath) or (os.path.isfile(backupPath)
+        and datetime.fromtimestamp(os.stat(backupPath).st_mtime) > datetime.now() - timedelta(hours = 24)):
         return
     if os.path.isfile(backupPath):
         if countLines(backupPath) < countLines(databasePath):
