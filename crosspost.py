@@ -46,8 +46,9 @@ def getPosts():
         cid = feed_view.post.cid
         text = feed_view.post.record.text
         # Sometimes bluesky shortens URLs and in that case we need to restore them before crossposting
-        if feed_view.post.record.facets and "..." in feed_view.post.record.text:
+        if feed_view.post.record.facets:
             text = restoreUrls(feed_view.post.record)
+        
         langs = feed_view.post.record.langs
         timestamp = datetime.strptime(feed_view.post.indexed_at.split(".")[0], date_in_format) + timedelta(hours = 2)
         # Setting replyToUser to the same as user handle and only changing it if the tweet is an actual reply.
