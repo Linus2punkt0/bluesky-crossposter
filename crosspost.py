@@ -406,7 +406,7 @@ def jsonWrite(skeet, tweet, toot, failed):
 def jsonRead():
     database = {}
     if not os.path.exists(databasePath):
-        return
+        return database
     with open(databasePath, 'r') as file:
         for line in file:
             jsonLine = json.loads(line)
