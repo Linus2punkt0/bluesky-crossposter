@@ -140,7 +140,7 @@ def restoreUrls(record):
     text = record.text
     encodedText = text.encode("UTF-8")
     for facet in record.facets:
-        if facet.py_type != "app.bsky.richtext.facet#link":
+        if facet.features[0].py_type != "app.bsky.richtext.facet#link":
             continue
         url = facet.features[0].uri
         # The index section designates where a URL starts end ends. Using this we can pick out the exact
