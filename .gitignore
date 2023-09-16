@@ -1,3 +1,5 @@
 __pycache__
 database.json
 database.bak
+.env
+dbhost/

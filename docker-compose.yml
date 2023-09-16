@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  crossposter:
+    build: .
+    environment:
+      BSKY_HANDLE:
+      BSKY_PASSWORD:
+      MASTODON_INSTANCE:
+      MASTODON_TOKEN:
+      TWITTER_APP_KEY:
+      TWITTER_APP_SECRET:
+      TWITTER_ACCESS_TOKEN:
+      TWITTER_ACCESS_TOKEN_SECRET:
+      TWITTER_CROSSPOSTING:
+      MASTODON_CROSSPOSTING:
+      LOGGING:
+      POST_DEFAULT:
+      MASTODON_LANG:
+      TWITTER_LANG:
+      MAX_RETRIES:
+      RUN_INTERVAL:
+      POST_TIME_LIMIT:
+    volumes:
+      - ./dbhost:/db

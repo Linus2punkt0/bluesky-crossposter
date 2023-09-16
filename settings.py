@@ -1,3 +1,5 @@
+import os
+
 # Enables/disables crossposting to twitter and mastodon
 # Accepted values: True, False
 Twitter = True
@@ -26,3 +28,13 @@ maxRetries = 5
 # Sets max time limit (in hours) for fetching posts. If no database exists, all posts within this time 
 # period will be posted.
 postTimeLimit = 12
+
+# Override settings with environment variables if they exist
+Twitter = os.environ.get('TWITTER_CROSSPOSTING').lower() == 'true' if os.environ.get('TWITTER_CROSSPOSTING') else Twitter
+Mastodon = os.environ.get('MASTODON_CROSSPOSTING').lower() == 'true' if os.environ.get('MASTODON_CROSSPOSTING') else Mastodon
+Logging = os.environ.get('LOGGING').lower() == 'true' if os.environ.get('LOGGING') else Logging
+postDefault = os.environ.get('POST_DEFAULT').lower() == 'true' if os.environ.get('POST_DEFAULT') else postDefault
+mastodonLang = os.environ.get('MASTODON_LANG') if os.environ.get('MASTODON_LANG') else mastodonLang
+twitterLang = os.environ.get('TWITTER_LANG') if os.environ.get('TWITTER_LANG') else twitterLang
+maxRetries = int(os.environ.get('MAX_RETRIES')) if os.environ.get('MAX_RETRIES') else maxRetries
+postTimeLimit = int(os.environ.get('POST_TIME_LIMIT')) if os.environ.get('POST_TIME_LIMIT') else postTimeLimit

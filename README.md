@@ -10,4 +10,7 @@ In the settings.py you can also disable posting to twitter or mastodon if you on
 
 The file settings.py now also allows (mis)using blueskys language function by designating a language that when set can be used to decide if a specific post should or should not be crossposted. More info can be found in the file.
 
+## Running with Docker
+The included Dockerfile and docker-compose file can be used to run the service in a docker container. Configuration options can be set in the docker-compose file, added to an .env file (see env.example) or injected as environment variables in some other way. An additional configuration option, RUN_INTERVAL, is provided to set the interval in seconds for which to check for new posts.
+
 Bluesky Crossposter™©® developed by denvitadrogen
