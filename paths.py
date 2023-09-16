@@ -5,9 +5,9 @@
 basePath = "/"
 # Path to the database file. If you want it somewhere other than directly in the base path you can 
 # either write the entire path manually, or just add the rest of the path on top of the basePath.
-databasePath = basePath + "database.json"
+databasePath = basePath + "db/" + "database.json"
 # Path to backup of database.
-backupPath = basePath + "database.bak"
+backupPath = basePath + "db/" + "database.bak"
 # Path for storing logs
 logPath = basePath + "logs/"
 # Path to folder for temporary storage of images
