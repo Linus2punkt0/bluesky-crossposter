@@ -2,7 +2,7 @@
 
 The Bluesky Crossposter is a python script that when running will automatically post your bluesky-posts to mastodon and twitter, excluding responses and reposts. The script can handle threads, quote posts of your own posts, and image posts, including alt text on images. 
 
-To get started, get the necessary keys and passwords and enter them in auth.py. Then fill in your paths in path.py. Finally set up a way for the code to be run periodically, for example a cronjob running every five or ten minutes. **NOTE! Currently there seems to be an issue with the bluesky ratelimit, limiting login requests to 30/day, meaning you cannot run script more than 30 times in a given 24 hour period. An option could be to limit what hours script is run to skip running during the night, as well as limit runt to once every halv hour or once every hour**
+To get started, get the necessary keys and passwords and enter them in auth.py. Then fill in your paths in path.py. Finally set up a way for the code to be run periodically, for example a cronjob running every five or ten minutes. **NOTE! Currently there seems to be an issue with the bluesky ratelimit, limiting login requests to 30/day, meaning you cannot run script more than 30 times in a given 24 hour period. An option could be to limit what hours script is run to skip running during the night, as well as limit runs to once every half hour or once every hour**
 
 When first run, or run without a database file, all posts within the timelimit set by postTimeLimit in settings.py will be posted.
 
