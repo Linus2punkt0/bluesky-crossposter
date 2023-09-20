@@ -13,7 +13,6 @@ date_in_format = '%Y-%m-%dT%H:%M:%S'
 
 bsky = Client()
 bsky.login(bsky_handle, bsky_password)
-
 # After changes in twitters API we need to use tweepy.Client to make posts as it uses version 2.0 of the API.
 # However, uploading images is still not included in 2.0, so for that we need to use tweepy.API, which uses
 # the previous version.
@@ -67,8 +66,8 @@ def getPosts():
                 writeLog("Post is of a type the crossposter can't parse.")
                 continue
         # Checking if post is regular reply
-        elif feed_view.reply:
-            replyTo = feed_view.reply.parent.cid
+        elif feed_view.post.record.reply:
+            replyTo = feed_view.post.record.reply.parent.cid
             # Poster will try to fetch reply to-username the "ordinary" way, 
             # and if it fails, it will try getting the entire thread and
             # finding it that way
@@ -109,7 +108,7 @@ def getReplyToUser(reply):
     uri = reply.uri
     username = ""
     try: 
-        response = bsky.bsky.feed.get_post_thread(params={"uri": uri})
+        response = bsky.app.bsky.feed.get_post_thread(params={"uri": uri})
         username = response.thread.post.author.handle
     except:
         writeLog("Unable to retrieve replyTo-user.")
@@ -420,8 +419,6 @@ def jsonRead():
                 "failed": failed
             }
             database[skeet] = lineData
-
-        
     return database;
 
 # Function for checking if a line is already in the database-file
