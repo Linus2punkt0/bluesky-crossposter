@@ -39,6 +39,8 @@ def getPosts():
     # Getting feed of user
     profile_feed = bsky.app.bsky.feed.get_author_feed({'actor': bsky_handle})
     for feed_view in profile_feed.feed:
+        if feed_view.post.author.handle != bsky_handle:
+            continue
         # Post type "post" means it is not a quote post.
         postType = "post"
         # If post has an embed of type record it is a quote post, and should not be crossposted
@@ -67,6 +69,7 @@ def getPosts():
                 continue
         # Checking if post is regular reply
         elif feed_view.post.record.reply:
+            postType = "reply"
             replyTo = feed_view.post.record.reply.parent.cid
             # Poster will try to fetch reply to-username the "ordinary" way, 
             # and if it fails, it will try getting the entire thread and
@@ -80,7 +83,7 @@ def getPosts():
             writeLog("Unable to find the user that this post replies to or quotes")
             continue
         # Checking if post is by user (i.e. not a repost), withing timelimit and either not a reply or a reply in a thread.
-        if feed_view.post.author.handle == bsky_handle and timestamp > datetime.now() - timedelta(hours = settings.postTimeLimit) and replyToUser == bsky_handle:
+        if timestamp > datetime.now() - timedelta(hours = settings.postTimeLimit) and replyToUser == bsky_handle:
             # Fetching images if there are any in the post
             imageData = ""
             images = []
@@ -226,6 +229,8 @@ def post(posts):
                 writeLog(error)
                 tFail += 1
                 tweetId = ""
+        else:
+            writeLog("Not posting to Twitter")
         # Mastodon does not have a quote retweet function, so those will just be sent as replies.
         if not tootId and tootReply != "skipped" and tootReply != "FailedToPost":
             updates = True
@@ -235,6 +240,8 @@ def post(posts):
                 writeLog(error)
                 mFail += 1
                 tootId = ""
+        else:
+            writeLog("Not posting to Mastodon")
         # Saving post to database
         jsonWrite(cid, tweetId, tootId, {"twitter": tFail, "mastodon": mFail})
     return updates
