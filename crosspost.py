@@ -415,7 +415,10 @@ def jsonRead():
         return database
     with open(databasePath, 'r') as file:
         for line in file:
-            jsonLine = json.loads(line)
+            try:
+                jsonLine = json.loads(line)
+            except:
+                continue
             skeet = jsonLine["skeet"]
             ids = jsonLine["ids"]
             failed = {"twitter": 0, "mastodon": 0}
