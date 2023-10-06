@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from auth import *
 from paths import *
 import settings
-import json, os, urllib.request, random, string, shutil
+import json, os, urllib.request, random, string, shutil, re
 
 date_in_format = '%Y-%m-%dT%H:%M:%S'
 
@@ -285,7 +285,7 @@ def tweet(post, replyTo, images, postType, doPost):
     # Checking if the post is longer than 280 characters, and if so sending to the
     # splitPost-function.
     partTwo = ""
-    if len(post) > 280:
+    if postLength(post) > 280:
         post, partTwo = splitPost(post)
     # If the function does not return a post, splitting failed and we will skip this post.
     if not post:
@@ -347,13 +347,27 @@ def toot(post, replyTo, images, doPost):
     id = a["id"]
     return id
 
+# Function for correctly counting post length
+def postLength(post):
+    # Twitter shortens urls to 23 characters
+    shortUrlLength = 23
+    length = len(post)
+    # Finding all urls and calculating how much shorter the post will be after shortening
+    regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+    urls = re.findall(regex, post)
+    for url in urls:
+        urlLength = len(url[0])
+        if urlLength > shortUrlLength:
+            length = length - (urlLength - shortUrlLength)
+    return length
+
 # Function for splitting up posts that are too long for twitter.
 def splitPost(text):
     writeLog("Splitting post that is too long for twitter.")
     first = text
     # We first try to split the post into sentences, and send as many as can fit in the first one,
     # and the rest in the second.
-    sentences = text.split(".")
+    sentences = text.split(". ")
     i = 1
     while len(first) > 280 and i < len(sentences):
         first = ".".join(sentences[:(len(sentences) - i)]) + "."
