@@ -28,6 +28,9 @@ maxRetries = 5
 # Sets max time limit (in hours) for fetching posts. If no database exists, all posts within this time 
 # period will be posted.
 postTimeLimit = 12
+# mastodonVisibility sets what visibility should be used when posting to Mastodon. Options are "public" for always public, "unlisted" for always unlisted,
+# "private" for always private and "hybrid" for all posts public except responses in threads (meaning first post in a thread is public and the rest unlisted).
+mastodonVisibility = "hybrid"
 
 # Override settings with environment variables if they exist
 Twitter = os.environ.get('TWITTER_CROSSPOSTING').lower() == 'true' if os.environ.get('TWITTER_CROSSPOSTING') else Twitter

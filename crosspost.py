@@ -332,17 +332,24 @@ def toot(post, replyTo, images, doPost):
                 writeLog("Uploading image " + filename)
                 res = mastodon.media_post(filename)
             mediaIds.append(res.id)
+    # Visibility is set to whatever is set in the settings file. If that is hybrid, it sets the visibility either to public or unlisted depending on
+    # if it is a reply in a thread or not.
+    visibility = settings.mastodonVisibility
+    if visibility == "hybrid" and replyTo:
+        visibility = "unlisted"
+    elif visibility == "hybrid":
+        visibility = "public"
     # I wanted to make this part a little neater, but didn't get it to work and gave up. So here we are.
     # If post is both reply and has images it is posted as both a reply and with images (duh). 
     # If just either of the two it is posted with just that, and if neither it is just posted as a text post.
     if replyTo and mediaIds:
-        a = mastodon.status_post(post, in_reply_to_id=replyTo, media_ids=mediaIds)
+        a = mastodon.status_post(post, in_reply_to_id=replyTo, media_ids=mediaIds, visibility=visibility)
     elif replyTo:
-        a = mastodon.status_post(post, in_reply_to_id=replyTo, visibility="unlisted")
+        a = mastodon.status_post(post, in_reply_to_id=replyTo, visibility=visibility)
     elif mediaIds:
-        a = mastodon.status_post(post, media_ids=mediaIds, visibility="unlisted")
+        a = mastodon.status_post(post, media_ids=mediaIds, visibility=visibility)
     else:
-        a = mastodon.status_post(post, visibility="unlisted")
+        a = mastodon.status_post(post, visibility=visibility)
     writeLog("Posted to mastodon")
     id = a["id"]
     return id
