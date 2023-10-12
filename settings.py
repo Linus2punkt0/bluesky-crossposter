@@ -41,3 +41,4 @@ mastodonLang = os.environ.get('MASTODON_LANG') if os.environ.get('MASTODON_LANG'
 twitterLang = os.environ.get('TWITTER_LANG') if os.environ.get('TWITTER_LANG') else twitterLang
 maxRetries = int(os.environ.get('MAX_RETRIES')) if os.environ.get('MAX_RETRIES') else maxRetries
 postTimeLimit = int(os.environ.get('POST_TIME_LIMIT')) if os.environ.get('POST_TIME_LIMIT') else postTimeLimit
+mastodonVisibility = os.environ.get('MASTODON_VISIBILITY') if os.environ.get('MASTODON_VISIBILITY') else mastodonVisibility
