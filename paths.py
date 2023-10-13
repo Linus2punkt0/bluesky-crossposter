@@ -1,6 +1,6 @@
 # This file contains all necessary file and folder paths. Make sure to end folder paths with "/".
 
-# basePath is the path from root to he lowest common denominator for all of the other paths.
+# basePath is the path from root to the lowest common denominator for all of the other paths.
 # Using an absolute path is especially important if running via cron.
 basePath = "/"
 # Path to the database file. If you want it somewhere other than directly in the base path you can 
