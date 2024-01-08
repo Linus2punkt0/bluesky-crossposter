@@ -91,9 +91,10 @@ def getPosts():
                 imageData = feed_view.post.embed.images
             elif feed_view.post.embed and hasattr(feed_view.post.embed, "media") and postType == "quote":
                 imageData = feed_view.post.embed.media.images
-            elif feed_view.post.embed and hasattr(feed_view.post.embed, "external") and hasattr(feed_view.post.embed.external, "uri"):
-                text += '\n'+feed_view.post.embed.external.uri
-
+            # Sometimes posts have included links that are not included in the actual text of the post. This adds adds that back.
+            if feed_view.post.embed and hasattr(feed_view.post.embed, "external") and hasattr(feed_view.post.embed.external, "uri"):
+                if feed_view.post.embed.external.uri not in text:
+                    text += '\n'+feed_view.post.embed.external.uri
             if imageData:
                 for image in imageData:
                     images.append({"url": image.fullsize, "alt": image.alt})
