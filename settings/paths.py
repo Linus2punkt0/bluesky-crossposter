@@ -1,14 +1,17 @@
 # This file contains all necessary file and folder paths. Make sure to end folder paths with "/".
 
-# basePath is the path from root to the lowest common denominator for all of the other paths.
+# base_path is the path from root to the lowest common denominator for all of the other paths.
 # Using an absolute path is especially important if running via cron.
-basePath = "/"
+base_path = "./"
 # Path to the database file. If you want it somewhere other than directly in the base path you can 
 # either write the entire path manually, or just add the rest of the path on top of the basePath.
-databasePath = basePath + "db/" + "database.json"
+database_path = base_path + "db/database.json"
+# Path to the cache-file, which keeps track of recent posts, allowing you to limit posts per hours and
+# retweet yourself 
+post_cache_path = base_path + "db/post.cache"
 # Path to backup of database.
-backupPath = basePath + "db/" + "database.bak"
+backup_path = base_path + "backup/" + "database.bak"
 # Path for storing logs
-logPath = basePath + "logs/"
+log_path = base_path + "logs/"
 # Path to folder for temporary storage of images
-imagePath = basePath + "images/"
+image_path = base_path + "images/"
