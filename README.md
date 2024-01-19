@@ -1,3 +1,7 @@
+# Mk 2
+
+Version 2 of the crossposter has now been release in beta, found under the crossposter-mk2-beta branch. The new version contains a bunch of new options, along with fixes and restructuring. To start using the new version I recommend making a new, separate installation and transferring yout settings and database to the new version. 
+
 # bluesky-crossposter
 
 The Bluesky Crossposter is a python script that when running will automatically post your bluesky-posts to mastodon and twitter, excluding responses and reposts. The script can handle threads, quote posts of your own posts, and image posts, including alt text on images. 
