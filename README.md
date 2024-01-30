@@ -1,3 +1,13 @@
+# Mk 2
+
+Version 2 of the crossposter has now been release in beta, found under the crossposter-mk2-beta branch. The new version contains a bunch of new options, along with fixes and restructuring. To start using the new version I recommend making a new, separate installation and transferring yout settings and database to the new version. 
+
+New functions include:
+- Reposting your own posts (only works on Mastodon unless you pay for a higher level of twitters API)
+- Quote posts of other people's posts, with their posts included as a link to Bluesky (can be toggled on/off in settings and automatically skips posts from users whos posts are not public).
+- Username handling allows you to either skip posts where you mention another Bluesky user, or cleanup of username so that they are not interpreted as users after being crossposted.
+- Limiting posts per hour, either skipping posts that go over the posts per hour limit, or sending them at a later time.
+
 # bluesky-crossposter
 
 The Bluesky Crossposter is a python script that when running will automatically post your bluesky-posts to mastodon and twitter, excluding responses and reposts. The script can handle threads, quote posts of your own posts, and image posts, including alt text on images. 

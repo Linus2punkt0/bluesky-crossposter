@@ -35,7 +35,7 @@ post_default = True
 # Accepted values: Any language tag in quotes (https://en.wikipedia.org/wiki/IETF_language_tag)
 mastodon_lang = ""
 twitter_lang = ""
-# quote_posts determines if quote reposts of other posts should be crossposted with the quoted post included as a link. If False these posts will be ignored.
+# quote_posts determines if quote reposts of other users' posts should be crossposted with the quoted post included as a link. If False these posts will be ignored.
 quote_posts = True
 # max_retries sets maximum amount of times poster will retry a failed crosspost.
 # Accepted values: Integers greater than 0

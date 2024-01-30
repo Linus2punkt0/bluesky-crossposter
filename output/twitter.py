@@ -36,9 +36,6 @@ def tweet(post, reply_to_post, quoted_post, images, allowed_reply):
     partTwo = ""
     if len(post) > 280:
         post, partTwo = split_post(post)
-    # If the function does not return a post, splitting failed and we will skip this post.
-    if not post:
-        return "skipped"
     a = twitter_client.create_tweet(text=post, reply_settings=reply_settings, quote_tweet_id=quoted_post, in_reply_to_tweet_id=reply_to_post, media_ids=media_ids)
     write_log("Posted to twitter")
     id = a[0]["id"]
