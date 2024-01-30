@@ -69,10 +69,3 @@ max_retries = int(os.environ.get('MAX_RETRIES')) if os.environ.get('MAX_RETRIES'
 post_time_limit = int(os.environ.get('POST_TIME_LIMIT')) if os.environ.get('POST_TIME_LIMIT') else post_time_limit
 max_per_hour = int(os.environ.get('MAX_PER_HOUR')) if os.environ.get('MAX_PER_HOUR') else max_per_hour
 overflow_posts = int(os.environ.get('OVERFLOW_POST')) if os.environ.get('OVERFLOW_POST') else overflow_posts
-
-
-
-
-
-max_per_hour = 0
-over_flow_posts = "retry"

@@ -2,8 +2,8 @@ from atproto import Client
 from settings.auth import BSKY_HANDLE, BSKY_PASSWORD
 from settings.paths import *
 from settings import settings
-from local.functions import write_log, lang_toggle, get_post_time_limit
-import urllib.request, random, string, arrow
+from local.functions import write_log, lang_toggle
+import arrow
 
 date_in_format = 'YYYY-MM-DDTHH:mm:ss'
 
@@ -107,7 +107,7 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
             images = []
             if feed_view.post.embed and hasattr(feed_view.post.embed, "images"):
                 image_data = feed_view.post.embed.images
-            elif feed_view.post.embed and hasattr(feed_view.post.embed, "media") and hasattr(feed_view.post.embed, "record"):
+            elif feed_view.post.embed and hasattr(feed_view.post.embed, "media") and hasattr(feed_view.post.embed.media, "images"):
                 image_data = feed_view.post.embed.media.images
             # Sometimes posts have included links that are not included in the actual text of the post. This adds adds that back.
             if feed_view.post.embed and hasattr(feed_view.post.embed, "external") and hasattr(feed_view.post.embed.external, "uri"):

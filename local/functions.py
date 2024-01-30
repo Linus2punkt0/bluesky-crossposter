@@ -57,6 +57,8 @@ def write_log(message, type = "message"):
 def cleanup():
     write_log("Deleting local images")
     for filename in os.listdir(image_path):
+        if (filename == ".gitignore"):
+            continue
         file_path = os.path.join(image_path, filename)
         try:
             if os.path.isfile(file_path) or os.path.islink(file_path):
