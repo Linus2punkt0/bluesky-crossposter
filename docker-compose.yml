@@ -5,6 +5,7 @@ services:
     environment:
       BSKY_HANDLE:
       BSKY_PASSWORD:
+      MASTODON_HANDLE:
       MASTODON_INSTANCE:
       MASTODON_TOKEN:
       TWITTER_APP_KEY:
@@ -13,13 +14,16 @@ services:
       TWITTER_ACCESS_TOKEN_SECRET:
       TWITTER_CROSSPOSTING:
       MASTODON_CROSSPOSTING:
+      LOG_LEVEL:
       MASTODON_VISIBILITY:
-      LOGGING:
+      MENTIONS:
       POST_DEFAULT:
       MASTODON_LANG:
       TWITTER_LANG:
+      QUOTE_POSTS:
       MAX_RETRIES:
-      RUN_INTERVAL:
       POST_TIME_LIMIT:
+      MAX_PER_HOUR:
+      OVERFLOW_POST:
     volumes:
       - ./dbhost:/db
