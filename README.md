@@ -1,6 +1,6 @@
 # Mk 2
 
-Version 2 of the crossposter has now been release in beta, found under the crossposter-mk2-beta branch. The new version contains a bunch of new options, along with fixes and restructuring. To start using the new version I recommend making a new, separate installation and transferring yout settings and database to the new version. 
+Version 2 of the crossposter has now been released. The new version contains a bunch of new options, along with fixes and restructuring. To start using the new version I recommend making a new, separate installation and transferring your settings and database to the new version. 
 
 New functions include:
 - Reposting your own posts (only works on Mastodon unless you pay for a higher level of twitters API)
