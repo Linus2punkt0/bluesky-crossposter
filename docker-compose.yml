@@ -12,8 +12,9 @@ services:
       TWITTER_APP_SECRET:
       TWITTER_ACCESS_TOKEN:
       TWITTER_ACCESS_TOKEN_SECRET:
-      TWITTER_CROSSPOSTING:
-      MASTODON_CROSSPOSTING:
+      # defaults to true, change to false if you don't want to enable it
+      TWITTER_CROSSPOSTING: true
+      MASTODON_CROSSPOSTING: true
       LOG_LEVEL:
       MASTODON_VISIBILITY:
       MENTIONS:
@@ -25,5 +26,8 @@ services:
       POST_TIME_LIMIT:
       MAX_PER_HOUR:
       OVERFLOW_POST:
+      # job interval, defaults to 1 hour(the max lag between bluesky and twitter/mastodon)
+      RUN_INTERVAL: 3600
     volumes:
       - ./dbhost:/db
+      - ./backup:/backup
