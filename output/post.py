@@ -1,5 +1,8 @@
-import random, string, urllib, arrow
-from settings import settings 
+import random
+import string
+import urllib
+import arrow
+from settings import settings
 from settings.paths import *
 from local.functions import write_log
 from local.db import db_write
@@ -60,7 +63,7 @@ def post(posts, database, post_cache):
         if tweet_id and toot_id and not post["repost"]:
             continue
         # If a retweet is found within the last hour, we check the cache to see if it has already been retweeted
-        repost_timelimit = arrow.utcnow().shift(hours = -1)
+        repost_timelimit = arrow.utcnow().shift(hours=-1)
         if cid in post_cache:
             repost_timelimit = post_cache[cid]
         # If it is a reply, we get the IDs of the posts we want to reply to from the database.
@@ -84,7 +87,7 @@ def post(posts, database, post_cache):
             elif not settings.quote_posts:
                 write_log("Post " + cid + " was a quote of a post that is not in the database.", "error")
                 continue
-        # In case the tweet or toot reply/quote variables are empty, we set them to None, to make sure they are in the correct format for 
+        # In case the tweet or toot reply/quote variables are empty, we set them to None, to make sure they are in the correct format for
         # the api requests. This is not necessary for the toot_quote variable, as it is not sent as a parameter in itself anyway.
         if not tweet_reply:
             tweet_reply = None
@@ -97,7 +100,7 @@ def post(posts, database, post_cache):
             images = get_images(images)
         # If mastodon is set to false, the post is not sent to mastodon.
         if not post["twitter"]:
-            toot_id = "skipped"
+            tweet_id = "skipped"
             write_log("Not posting to Twitter because posting was set to false.")
         elif tweet_id and not post["repost"]:
             write_log("Post " + cid + " already sent to twitter.")
@@ -158,8 +161,10 @@ def post(posts, database, post_cache):
             post_cache[cid] = arrow.utcnow()
     return updates, database, post_cache
 
-# Function for getting included images. If no images are included, an empty list will be returned, 
+# Function for getting included images. If no images are included, an empty list will be returned,
 # and the posting functions will know not to include any images.
+
+
 def get_images(images):
     local_images = []
     for image in images:
