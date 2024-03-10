@@ -58,8 +58,8 @@ def split_post(text):
     sentences = text.split(". ")
     i = 1
     while len(first) > 280 and i < len(sentences):
-        first = ".".join(sentences[:(len(sentences) - i)]) + "."
-        second = ".".join(sentences[(len(sentences) - i):])
+        first = ". ".join(sentences[:(len(sentences) - i)]) + "."
+        second = ". ".join(sentences[(len(sentences) - i):])
         i += 1
     # If splitting by sentance does not result in a short enough post, we try splitting by words instead.
     if len(first) > 280:
