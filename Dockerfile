@@ -1,5 +1,5 @@
 # Use latest alpine-derived Python base image
-FROM python:3.11.6-alpine3.18
+FROM python:latest
 
 # Move to app directory
 
