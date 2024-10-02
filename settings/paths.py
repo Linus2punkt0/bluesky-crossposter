@@ -15,3 +15,5 @@ backup_path = base_path + "backup/" + "database.bak"
 log_path = base_path + "logs/"
 # Path to folder for temporary storage of images
 image_path = base_path + "images/"
+# Path to file used to store ratelimit info
+rate_limit_path = base_path + "ratelimit"
