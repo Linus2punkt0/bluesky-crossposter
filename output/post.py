@@ -72,8 +72,8 @@ def post(posts, database, post_cache):
             tweet_quote = database[post["quoted_post"] ]["ids"]["twitter_id"]
             toot_quote = database[post["quoted_post"] ]["ids"]["mastodon_id"]
         elif post["quoted_post"]  and post["quoted_post"]  not in database:
-            if settings.quote_posts and post["quoted_url"]  not in post["text"]:
-                post["text"] += "\n" + post["quoted_url"]
+            if settings.quote_posts and post["quote_url"]  not in post["text"]:
+                post["text"] += "\n" + post["quote_url"]
             elif not settings.quote_posts:
                 logger.error("Post " + cid + " was a quote of a post that is not in the database.")
                 continue
