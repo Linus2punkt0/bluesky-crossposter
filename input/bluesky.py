@@ -1,26 +1,36 @@
-from atproto import Client
+from loguru import logger
 from settings.auth import BSKY_HANDLE, BSKY_PASSWORD
 from settings.paths import *
 from settings import settings
-from local.functions import write_log, lang_toggle
+from local.functions import RateLimitedClient, lang_toggle, rate_limit_write
 import arrow
 
 date_in_format = 'YYYY-MM-DDTHH:mm:ss'
 
 # Setting up connections to bluesky, twitter and mastodon
-
-bsky = Client()
-bsky.login(BSKY_HANDLE, BSKY_PASSWORD)
+def bsky_connect():
+    try:
+        bsky = RateLimitedClient()
+        bsky.login(BSKY_HANDLE, BSKY_PASSWORD)
+        return bsky
+    except Exception as e:
+        logger.error(e)
+        if e.response.content.error == "RateLimitExceeded":
+            ratelimit_reset = e.response.headers["RateLimit-Reset"]
+            rate_limit_write(ratelimit_reset)
+        exit()
 
 # Getting posts from bluesky
 
 def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
-    write_log("Gathering posts")
+    bsky = bsky_connect()
+    logger.info("Gathering posts")
     posts = {}
     # Getting feed of user
     profile_feed = bsky.app.bsky.feed.get_author_feed({'actor': BSKY_HANDLE})
     visibility = settings.visibility
     for feed_view in profile_feed.feed:
+#        logger.debug(feed_view)
         # If the post was not written by the account that posted it, it is a repost and we skip it.
         if feed_view.post.author.handle != BSKY_HANDLE:
             continue
@@ -74,7 +84,7 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
             try:
                 quoted_user, quoted_post, quote_url, open = get_quote_post(feed_view.post.embed.record)
             except:
-                write_log("Post " + cid + " is of a type the crossposter can't parse.", "error")
+                logger.error("Post " + cid + " is of a type the crossposter can't parse.")
                 continue
             # If post is a quote post of a post from another user, and quote-posting is disabled in settings
             # or the post is not open to users not logged in, the post will be skipped
@@ -98,24 +108,37 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
         # If unable to fetch user that was replied to, code will skip this post. If the post was not a 
         # reply at all, the reply_to_user will still be set to the user account.
         if not reply_to_user:
-            write_log("Unable to find the user that post " + cid + " replies to or quotes", "error")
+            logger.error("Unable to find the user that post " + cid + " replies to or quotes")
             continue
         # Checking if post is withing timelimit and not a reply to someone elses post.
         if created_at > timelimit and reply_to_user == BSKY_HANDLE:
             # Fetching images if there are any in the post
             image_data = ""
-            images = []
+            video_data = {}
+            media = {}
             if feed_view.post.embed and hasattr(feed_view.post.embed, "images"):
                 image_data = feed_view.post.embed.images
             elif feed_view.post.embed and hasattr(feed_view.post.embed, "media") and hasattr(feed_view.post.embed.media, "images"):
                 image_data = feed_view.post.embed.media.images
+            elif  feed_view.post.record.embed and hasattr(feed_view.post.record.embed, "video"):
+                video_data = get_video_data(feed_view)
+                media = {
+                    "type": "video",
+                    "data": video_data
+                }
+                logger.debug("Found video: %s" % video_data)
             # Sometimes posts have included links that are not included in the actual text of the post. This adds adds that back.
             if feed_view.post.embed and hasattr(feed_view.post.embed, "external") and hasattr(feed_view.post.embed.external, "uri"):
                 if feed_view.post.embed.external.uri not in text:
                     text += '\n'+feed_view.post.embed.external.uri
             if image_data:
+                images = []
                 for image in image_data:
                     images.append({"url": image.fullsize, "alt": image.alt})
+                media = {
+                    "type": "image",
+                    "data": images
+                }
             if visibility == "hybrid" and reply_to_post:
                 visibility = "unlisted"
             elif visibility == "hybrid":
@@ -125,7 +148,7 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
                 "reply_to_post": reply_to_post,
                 "quoted_post": quoted_post,
                 "quote_url": quote_url,
-                "images": images,
+                "media": media,
                 "visibility": visibility,
                 "twitter": twitter_post,
                 "mastodon": mastodon_post,
@@ -133,6 +156,7 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
                 "repost": repost,
                 "timestamp": created_at
             }
+            logger.debug(post_info)
             # Saving post to posts dictionary
             posts[cid] = post_info;
     return posts
@@ -145,8 +169,9 @@ def get_reply_to_user(reply):
     try: 
         response = bsky.app.bsky.feed.get_post_thread(params={"uri": uri})
         username = response.thread.post.author.handle
-    except:
-        write_log("Unable to retrieve reply_to-user of post.", "error")
+    except Exception as e:
+        logger.error("Unable to retrieve reply_to-user of post.")
+        logger.error(e)
     return username
 
 
@@ -233,3 +258,14 @@ def get_quote_post(post):
         open = False
     url = "https://bsky.app/profile/" + user + "/post/" + uri.split("/")[-1]
     return user, cid, url, open
+
+
+def get_video_data(post_data):
+    did = post_data["post"]["author"]["did"]
+    blob_cid = post_data["post"]["record"]["embed"]["video"].ref.link
+    url = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=%s&cid=%s" % (did, blob_cid)
+    alt = post_data["post"]["record"]["embed"]["alt"]
+    # Setting alt to empty string if it is noneType
+    if not alt:
+        alt = ""
+    return {"url": url, "alt": alt}

@@ -1,5 +1,5 @@
 from settings.paths import *
-from local.functions import write_log
+from loguru import logger
 import json, os, shutil, arrow
 
 # Function for writing new lines to the database
@@ -29,7 +29,7 @@ def db_write(skeet, tweet, toot, failed, database):
         append_write = 'w'
     # Skipping adding posts to db file if they are already in it.
     if not is_in_db(json_string):
-        write_log("Adding to database: " + json_string)
+        logger.info("Adding to database: " + json_string)
         file = open(database_path, append_write)
         file.write(json_string + "\n")
         file.close()
@@ -89,7 +89,7 @@ def is_in_db(line):
 # This does kind of make it uneccessary to write each new post to the file while running,
 # but in case the program fails halfway through it gives us kind of a backup.
 def save_db(database):
-    write_log("Saving new database")
+    logger.info("Saving new database")
     append_write = "w"
     for skeet in database:
         row = {
@@ -112,14 +112,14 @@ def db_backup():
         and arrow.Arrow.fromtimestamp(os.stat(backup_path).st_mtime) > arrow.utcnow().shift(hours = -24)):
         return
     if os.path.isfile(backup_path):
-        if count_lines(backup_path) < count_lines(database_path):
+        if count_lines(backup_path) <= count_lines(database_path):
             os.remove(backup_path)
         else:
             date = arrow.utcnow().format("YYMMDD")
             os.rename(backup_path, backup_path + "_" + date)
-            write_log("Current backup file contains more entries than current live database, backup saved", "error")
+            logger.error("Current backup file contains more entries than current live database, backup saved")
     shutil.copyfile(database_path, backup_path)
-    write_log("Backup of database taken")
+    logger.info("Backup of database taken")
 
 
 # Function for counting lines in a file
