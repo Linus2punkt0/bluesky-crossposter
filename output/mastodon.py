@@ -32,7 +32,6 @@ def toot(post, reply_to_post, quoted_post, media, visibility = "unlisted"):
                 logger.info("Uploading media " + item["filename"])
                 res = mastodon.media_post(item["filename"], synchronous=True)
             media_ids.append(res.id)
-        media_ids.append(res.id)
     a = mastodon.status_post(post, in_reply_to_id=reply_to_post, media_ids=media_ids, visibility=visibility)
     logger.info("Posted to mastodon")
     id = a["id"]

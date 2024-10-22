@@ -35,12 +35,12 @@ def post(posts, database, post_cache):
             t_fail = database[cid]["failed"]["twitter"]
             m_fail = database[cid]["failed"]["mastodon"]
         if m_fail >= settings.max_retries:
-            logger.error("Error limit reached, not posting to Mastodon")
+            logger.info("Error limit reached, not posting to Mastodon")
             if not toot_id:
                 updates = True
                 toot_id = "FailedToPost"
         if t_fail >= settings.max_retries:
-            logger.error("Error limit reached, not posting to Twitter")
+            logger.info("Error limit reached, not posting to Twitter")
             if not tweet_id:
                 updates = True
                 tweet_id = "FailedToPost"
@@ -109,7 +109,7 @@ def post(posts, database, post_cache):
                 logger.error(traceback.format_exc())
         # Trying to post to twitter and mastodon. If posting fails the post ID for each service is set to an
         # empty string, letting the code know it should try again next time the code is run.
-        elif not tweet_id and tweet_reply != "skipped" and tweet_reply != "FailedToPost":
+        elif not tweet_id and tweet_reply not in ["skipped", "FailedToPost", "duplicate"]:
             updates = True
             try:
                 tweet_id = tweet(post["text"], tweet_reply, tweet_quote, media, post["allowed_reply"])
@@ -138,7 +138,7 @@ def post(posts, database, post_cache):
             except Exception as e:
                 logger.error(traceback.format_exc())
         # Mastodon does not have a quote retweet function, so those will just be sent as replies.
-        elif not toot_id and toot_reply != "skipped" and toot_reply != "FailedToPost":
+        elif not toot_id and toot_reply not in ["skipped", "FailedToPost", "duplicate"]:
             updates = True
             try:
                 toot_id = toot(post["text"], toot_reply, toot_quote, media, post["visibility"])
