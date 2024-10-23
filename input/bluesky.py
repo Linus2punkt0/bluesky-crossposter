@@ -104,7 +104,7 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
             try:
                 reply_to_user = feed_view.reply.parent.author.handle
             except:
-                reply_to_user = get_reply_to_user(feed_view.post.record.reply.parent)
+                reply_to_user = get_reply_to_user(feed_view.post.record.reply.parent, bsky)
         # If unable to fetch user that was replied to, code will skip this post. If the post was not a 
         # reply at all, the reply_to_user will still be set to the user account.
         if not reply_to_user:
@@ -163,7 +163,7 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
 
 # Function for getting username of person replied to. It can mostly be retrieved from the reply section of the tweet that has been fetched,
 # but in cases where the original post in a thread has been deleted it causes some weirdness. Hopefully this resolves it.
-def get_reply_to_user(reply):
+def get_reply_to_user(reply, bsky):
     uri = reply.uri
     username = ""
     try: 

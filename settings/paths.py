@@ -10,7 +10,7 @@ database_path = base_path + "db/database.json"
 # retweet yourself 
 post_cache_path = base_path + "db/post.cache"
 # Path to backup of database.
-backup_path = base_path + "backup/" + "database.bak"
+backup_path = base_path + "backups/" + "database.bak"
 # Path for storing logs
 log_path = base_path + "logs/"
 # Path to folder for temporary storage of images
