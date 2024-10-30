@@ -38,5 +38,16 @@ def toot(post, reply_to_post, quoted_post, media, visibility = "unlisted"):
     return id
 
 def retoot(toot_id):
-    mastodon.status_reblog(toot_id)
+    a = mastodon.status_reblog(toot_id)
     logger.info("Boosted toot " + str(toot_id))
+    logger.debug(a)
+
+def delete(toot_id):
+    logger.info("deleting toot " + str(toot_id))
+    try:
+        a = mastodon.status_delete(toot_id)
+        logger.debug(a)
+    except Exception as e:
+        logger.debug(e)
+        if "Record not found" in str(e):
+            logger.info("Toot with id %s does not exist" % toot_id)

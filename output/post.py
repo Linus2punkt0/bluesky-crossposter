@@ -3,8 +3,8 @@ from loguru import logger
 from settings import settings 
 from settings.paths import *
 from local.db import db_write
-from output.twitter import tweet, retweet
-from output.mastodon import toot, retoot
+from output.twitter import tweet, retweet, delete as delete_tweet
+from output.mastodon import toot, retoot, delete as delete_toot
 
 
 def post(posts, database, post_cache):
@@ -188,3 +188,14 @@ def get_video(video_data):
         f.write(response.content)
     logger.info("Video successfully downloaded to %s." % filename)
     return [{ "filename": filename, "alt": video_data["alt"] }]
+
+def delete(deleted, post_cache, database):
+    for cid in deleted:
+        if settings.Twitter:
+            delete_tweet(database[cid]["ids"]["twitter_id"])
+        if settings.Mastodon:
+            delete_toot(database[cid]["ids"]["mastodon_id"] )
+        del database[cid]
+        del post_cache[cid]
+        logger.info("Deleted post " + str(cid))
+        return database, post_cache

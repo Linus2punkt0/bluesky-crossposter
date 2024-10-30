@@ -48,20 +48,39 @@ def retweet(tweet_id):
     a = twitter_client.retweet(tweet_id)
     logger.info("retweeted tweet " + str(tweet_id))
 
+def delete(tweet_id):
+    logger.info("Deleting tweet with id " + tweet_id)
+    try:
+        a = twitter_api.destroy_status(tweet_id)
+        logger.debug(a)
+    except Exception as e:
+        logger.debug(e)
+        if "No status found with that ID" in str(e):
+            logger.info("Tweet with id %s does not exist" % tweet_id)
 
 # Function for splitting up posts that are too long for twitter.
 def split_post(text):
     logger.info("Splitting post that is too long for twitter.")
     first = text
-    # We first try to split the post into sentences, and send as many as can fit in the first one,
+    # We first try to split the post by paragraphs, and send as many as can fit in the first post,
     # and the rest in the second.
-    sentences = text.split(". ")
-    i = 1
-    while len(first) > 280 and i < len(sentences):
-        first = ". ".join(sentences[:(len(sentences) - i)]) + "."
-        second = ". ".join(sentences[(len(sentences) - i):])
-        i += 1
-    # If splitting by sentance does not result in a short enough post, we try splitting by words instead.
+    if "\n" in text:
+        paragraphs = text.split("\n")
+        i = 1
+        while len(first) > 280 and i < len(paragraphs):
+            first = "\n".join(sentences[:(len(sentences) - i)]) + "\n"
+            second = "\n".join(sentences[(len(sentences) - i):])
+            i += 1
+    # If post can't be split by paragraph, we try by sentence.
+    if len(first) > 280:
+        first = text
+        sentences = text.split(". ")
+        i = 1
+        while len(first) > 280 and i < len(sentences):
+            first = ". ".join(sentences[:(len(sentences) - i)]) + "."
+            second = ". ".join(sentences[(len(sentences) - i):])
+            i += 1
+    # If splitting by sentence does not result in a short enough post, we try splitting by words instead.
     if len(first) > 280:
         first = text
         words = text.split(" ")
