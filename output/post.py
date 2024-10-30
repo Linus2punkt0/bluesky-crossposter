@@ -63,7 +63,7 @@ def post(posts, database, post_cache):
             tweet_reply = database[post["reply_to_post"]]["ids"]["twitter_id"]
             toot_reply = database[post["reply_to_post"]]["ids"]["mastodon_id"]
         elif post["reply_to_post"] and post["reply_to_post"] not in database:
-            logger.error("Post " + cid + " was a reply to a post that is not in the database.")
+            logger.info("Post " + cid + " was a reply to a post that is not in the database.")
             continue
         # If post is a quote post we get the IDs of the posts we want to quote from the database.
         # If the posts are not found in the database we check if the quote_post setting is true or false in settings.
