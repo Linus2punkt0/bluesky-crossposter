@@ -166,7 +166,7 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1), session=None):
 
 # Function for getting username of person replied to. It can mostly be retrieved from the reply section of the tweet that has been fetched,
 # but in cases where the original post in a thread has been deleted it causes some weirdness. Hopefully this resolves it.
-def get_reply_to_user(reply):
+def get_reply_to_user(reply, bsky):
     uri = reply.uri
     username = ""
     try: 
