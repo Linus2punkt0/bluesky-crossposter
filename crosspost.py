@@ -42,3 +42,4 @@ if __name__ == "__main__":
         run()
     except Exception as e:
         logger.error(traceback.format_exc())
+        sys.exit(-1)
