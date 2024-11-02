@@ -8,10 +8,13 @@ import arrow
 date_in_format = 'YYYY-MM-DDTHH:mm:ss'
 
 # Setting up connections to bluesky, twitter and mastodon
-def bsky_connect():
+def bsky_connect(session=None):
     try:
         bsky = RateLimitedClient()
-        bsky.login(BSKY_HANDLE, BSKY_PASSWORD)
+        if session:
+            bsky.login(session_string=session)
+        else:
+            bsky.login(BSKY_HANDLE, BSKY_PASSWORD)
         return bsky
     except Exception as e:
         logger.error(e)
@@ -22,8 +25,8 @@ def bsky_connect():
 
 # Getting posts from bluesky
 
-def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
-    bsky = bsky_connect()
+def get_posts(timelimit = arrow.utcnow().shift(hours = -1), session=None):
+    bsky = bsky_connect(session)
     logger.info("Gathering posts")
     posts = {}
     # Getting feed of user
@@ -159,11 +162,11 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
             logger.debug(post_info)
             # Saving post to posts dictionary
             posts[cid] = post_info;
-    return posts
+    return posts, bsky.export_session_string()
 
 # Function for getting username of person replied to. It can mostly be retrieved from the reply section of the tweet that has been fetched,
 # but in cases where the original post in a thread has been deleted it causes some weirdness. Hopefully this resolves it.
-def get_reply_to_user(reply, bsky):
+def get_reply_to_user(reply):
     uri = reply.uri
     username = ""
     try: 

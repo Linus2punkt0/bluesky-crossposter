@@ -9,6 +9,8 @@ database_path = base_path + "db/database.json"
 # Path to the cache-file, which keeps track of recent posts, allowing you to limit posts per hours and
 # retweet yourself 
 post_cache_path = base_path + "db/post.cache"
+# Path to the session cache
+session_cache_path = base_path + "db/session.cache"
 # Path to backup of database.
 backup_path = base_path + "backups/" + "database.bak"
 # Path for storing logs

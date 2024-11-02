@@ -122,7 +122,7 @@ def post_cache_read():
                 continue
             if timestamp > timelimit:
                 cache[post_id] = timestamp
-    return cache;
+    return cache
 
 def post_cache_write(cache):
     logger.info("Saving post cache.")
@@ -133,6 +133,21 @@ def post_cache_write(cache):
         file.write(post_id + ";" + timestamp + "\n")
         file.close()
         append_write = "a"
+
+def session_cache_read():
+    logger.info("Reading session cache")
+    cache = {}
+    if not os.path.exists(session_cache_path):
+        logger.info(session_cache_path + " not found.")
+        return None
+    with open(session_cache_path, 'r') as file:
+        return file.read()
+
+def session_cache_write(session):
+    logger.info("Saving session cache")
+    with open(session_cache_path, "w") as file:
+        file.write(session)
+    append_write = "w"
 
 # The timelimit specifies the cutoff time for which posts are crossposted. This is usually based on the 
 # post_time_limit in settings, but if overflow_posts is set to "skip", meaning any posts that could
