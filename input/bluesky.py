@@ -2,31 +2,40 @@ from loguru import logger
 from settings.auth import BSKY_HANDLE, BSKY_PASSWORD
 from settings.paths import *
 from settings import settings
-from local.functions import RateLimitedClient, lang_toggle, rate_limit_write
-import arrow
+from local.functions import RateLimitedClient, lang_toggle, rate_limit_write, session_cache_read, session_cache_write, on_session_change
+import arrow, os
 
 date_in_format = 'YYYY-MM-DDTHH:mm:ss'
 
 # Setting up connections to bluesky, twitter and mastodon
-def bsky_connect(session=None):
+def bsky_connect():
     try:
         bsky = RateLimitedClient()
+        bsky.on_session_change(on_session_change)
+        session = session_cache_read()
         if session:
+            logger.info("Connecting to Bluesky using saved session.")
             bsky.login(session_string=session)
         else:
+            logger.info("Creating new Bluesky session using password and username.")
             bsky.login(BSKY_HANDLE, BSKY_PASSWORD)
+        session = bsky.export_session_string()
+        session_cache_write(session)
         return bsky
     except Exception as e:
         logger.error(e)
         if e.response.content.error == "RateLimitExceeded":
             ratelimit_reset = e.response.headers["RateLimit-Reset"]
             rate_limit_write(ratelimit_reset)
+        elif e.response.content.error == "ExpiredToken":
+            logger.info("Session expired, removing session file.")
+            os.remove(session_cache_path)
         exit()
 
 # Getting posts from bluesky
 
-def get_posts(timelimit = arrow.utcnow().shift(hours = -1), session=None):
-    bsky = bsky_connect(session)
+def get_posts(timelimit = arrow.utcnow().shift(hours = -1)):
+    bsky = bsky_connect()
     logger.info("Gathering posts")
     posts = {}
     # Getting feed of user
@@ -162,7 +171,7 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1), session=None):
             logger.debug(post_info)
             # Saving post to posts dictionary
             posts[cid] = post_info;
-    return posts, bsky.export_session_string()
+    return posts
 
 # Function for getting username of person replied to. It can mostly be retrieved from the reply section of the tweet that has been fetched,
 # but in cases where the original post in a thread has been deleted it causes some weirdness. Hopefully this resolves it.

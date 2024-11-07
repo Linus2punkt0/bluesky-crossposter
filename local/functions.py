@@ -1,4 +1,4 @@
-from atproto import Client
+from atproto import Client, Session, SessionEvent
 from loguru import logger
 from settings.auth import *
 from settings.paths import *
@@ -31,6 +31,25 @@ class RateLimitedClient(Client):
             logger.info("Bluesky rate limit has %s out of %s remaining." % (self._remaining, self._limit))
 
         return self.response
+
+def on_session_change(event: SessionEvent, session: Session) -> None:
+    print('Session changed:', event, repr(session))
+    if event in (SessionEvent.CREATE, SessionEvent.REFRESH):
+        print('Saving changed session')
+        session_cache_write(session.export())
+
+def session_cache_read():
+    logger.info("Reading session cache")
+    if not os.path.exists(session_cache_path):
+        logger.info(session_cache_path + " not found.")
+        return None
+    with open(session_cache_path, 'r') as file:
+        return file.read()
+
+def session_cache_write(session):
+    logger.info("Saving session cache")
+    with open(session_cache_path, "w") as file:
+        file.write(session)
 
 
 # Functions for checking and saving ratelimit-reset
@@ -133,21 +152,6 @@ def post_cache_write(cache):
         file.write(post_id + ";" + timestamp + "\n")
         file.close()
         append_write = "a"
-
-def session_cache_read():
-    logger.info("Reading session cache")
-    cache = {}
-    if not os.path.exists(session_cache_path):
-        logger.info(session_cache_path + " not found.")
-        return None
-    with open(session_cache_path, 'r') as file:
-        return file.read()
-
-def session_cache_write(session):
-    logger.info("Saving session cache")
-    with open(session_cache_path, "w") as file:
-        file.write(session)
-    append_write = "w"
 
 # The timelimit specifies the cutoff time for which posts are crossposted. This is usually based on the 
 # post_time_limit in settings, but if overflow_posts is set to "skip", meaning any posts that could

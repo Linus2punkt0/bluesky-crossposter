@@ -2,7 +2,7 @@ import traceback, sys
 from loguru import logger
 from settings.auth import *
 from settings.paths import *
-from local.functions import cleanup, post_cache_read, post_cache_write, session_cache_read, session_cache_write, get_post_time_limit, check_rate_limit
+from local.functions import cleanup, post_cache_read, post_cache_write, get_post_time_limit, check_rate_limit
 from local.db import db_read, db_backup, save_db
 from input.bluesky import get_posts
 from output.post import post
@@ -24,9 +24,7 @@ def run():
     database = db_read()
     post_cache = post_cache_read()
     timelimit = get_post_time_limit(post_cache)
-    session = session_cache_read()
-    posts, session = get_posts(timelimit, session)
-    session_cache_write(session)
+    posts = get_posts(timelimit)
     updates, database, post_cache = post(posts, database, post_cache)
     post_cache_write(post_cache)
     if updates:

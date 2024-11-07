@@ -5,3 +5,4 @@ logs/*.log*
 backups/*.bak*
 .env
 *.jpg
+*.cache
