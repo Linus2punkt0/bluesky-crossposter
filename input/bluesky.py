@@ -2,8 +2,8 @@ from loguru import logger
 from settings.auth import BSKY_HANDLE, BSKY_PASSWORD
 from settings.paths import *
 from settings import settings
-from local.functions import RateLimitedClient, lang_toggle, rate_limit_write
-import arrow
+from local.functions import RateLimitedClient, lang_toggle, rate_limit_write, session_cache_read, session_cache_write, on_session_change
+import arrow, os
 
 date_in_format = 'YYYY-MM-DDTHH:mm:ss'
 
@@ -11,13 +11,25 @@ date_in_format = 'YYYY-MM-DDTHH:mm:ss'
 def bsky_connect():
     try:
         bsky = RateLimitedClient()
-        bsky.login(BSKY_HANDLE, BSKY_PASSWORD)
+        bsky.on_session_change(on_session_change)
+        session = session_cache_read()
+        if session:
+            logger.info("Connecting to Bluesky using saved session.")
+            bsky.login(session_string=session)
+        else:
+            logger.info("Creating new Bluesky session using password and username.")
+            bsky.login(BSKY_HANDLE, BSKY_PASSWORD)
+        session = bsky.export_session_string()
+        session_cache_write(session)
         return bsky
     except Exception as e:
         logger.error(e)
         if e.response.content.error == "RateLimitExceeded":
             ratelimit_reset = e.response.headers["RateLimit-Reset"]
             rate_limit_write(ratelimit_reset)
+        elif e.response.content.error == "ExpiredToken":
+            logger.info("Session expired, removing session file.")
+            os.remove(session_cache_path)
         exit()
 
 # Getting posts from bluesky
