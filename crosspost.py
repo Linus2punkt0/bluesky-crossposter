@@ -1,4 +1,4 @@
-import traceback
+import traceback, sys
 from settings.auth import *
 from settings.paths import *
 from local.functions import cleanup, post_cache_read, post_cache_write, get_post_time_limit, check_rate_limit, logger
