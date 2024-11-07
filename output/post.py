@@ -3,8 +3,8 @@ from loguru import logger
 from settings import settings 
 from settings.paths import *
 from local.db import db_write
-from output.twitter import tweet, retweet
-from output.mastodon import toot, retoot
+from output.twitter import tweet, retweet, delete as delete_tweet
+from output.mastodon import toot, retoot, delete as delete_toot
 
 
 def post(posts, database, post_cache):
@@ -63,7 +63,7 @@ def post(posts, database, post_cache):
             tweet_reply = database[post["reply_to_post"]]["ids"]["twitter_id"]
             toot_reply = database[post["reply_to_post"]]["ids"]["mastodon_id"]
         elif post["reply_to_post"] and post["reply_to_post"] not in database:
-            logger.error("Post " + cid + " was a reply to a post that is not in the database.")
+            logger.info("Post " + cid + " was a reply to a post that is not in the database.")
             continue
         # If post is a quote post we get the IDs of the posts we want to quote from the database.
         # If the posts are not found in the database we check if the quote_post setting is true or false in settings.
@@ -188,3 +188,14 @@ def get_video(video_data):
         f.write(response.content)
     logger.info("Video successfully downloaded to %s." % filename)
     return [{ "filename": filename, "alt": video_data["alt"] }]
+
+def delete(deleted, post_cache, database):
+    for cid in deleted:
+        if settings.Twitter:
+            delete_tweet(database[cid]["ids"]["twitter_id"])
+        if settings.Mastodon:
+            delete_toot(database[cid]["ids"]["mastodon_id"] )
+        del database[cid]
+        del post_cache[cid]
+        logger.info("Deleted post " + str(cid))
+        return database, post_cache

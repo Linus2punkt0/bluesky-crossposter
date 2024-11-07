@@ -52,6 +52,8 @@ max_per_hour = 0
 # If set to "skip" the posts will be skipped and the poster will instead continue on with new posts.
 # Accepted values: retry, skip
 overflow_posts = "retry"
+# If cross_delete is set to true, posts you delete from bluesky within one our of being crossposted will also be deleted from mastodon and twitter
+cross_delete = True
 # Setting a buffer to avoid exceeding the rate limit. The limit is set in percent, and when the ratelimit-remaining reaches
 # x percent of ratelimit-limit the crossposter will pause until the ratelimit-reset.
 rate_limit_buffer = 10
@@ -73,5 +75,6 @@ max_retries = int(os.environ.get('MAX_RETRIES')) if os.environ.get('MAX_RETRIES'
 post_time_limit = int(os.environ.get('POST_TIME_LIMIT')) if os.environ.get('POST_TIME_LIMIT') else post_time_limit
 max_per_hour = int(os.environ.get('MAX_PER_HOUR')) if os.environ.get('MAX_PER_HOUR') else max_per_hour
 overflow_posts = int(os.environ.get('OVERFLOW_POST')) if os.environ.get('OVERFLOW_POST') else overflow_posts
-overflow_posts = int(os.environ.get('RATE_LIMIT_BUFFER')) if os.environ.get('RATE_LIMIT_BUFFER') else rate_limit_buffer
-overflow_posts = int(os.environ.get('LOG_LEVEL')) if os.environ.get('LOG_LEVEL') else log_level
+rate_limig_buffer = int(os.environ.get('RATE_LIMIT_BUFFER')) if os.environ.get('RATE_LIMIT_BUFFER') else rate_limit_buffer
+log_level = int(os.environ.get('LOG_LEVEL')) if os.environ.get('LOG_LEVEL') else log_level
+cross_delete = int(os.environ.get('CROSS_DELETE')) if os.environ.get('CROSS_DELETE') else cross_delete

@@ -1,3 +1,9 @@
+# Update Fall 2024
+
+New functionality has been added over the fall, including functionality to handle Blueskys new video functions. Another new function is cross-deletion, meaning if you delete a post within one hour of posting it on Bluesky, it will also be deleted on the other platforms. This function can be disabled in settings by setting cross_delete to False.
+
+This will probably be the last update for a while, except for some bug fixes if needed. Before further updates the poster would probably need some major rewrites to make it be less of a mess.
+
 # Mk 2
 
 Version 2 of the crossposter has now been released. The new version contains a bunch of new options, along with fixes and restructuring. To start using the new version I recommend making a new, separate installation and transferring your settings and database to the new version. 
