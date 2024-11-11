@@ -62,14 +62,15 @@ def delete(tweet_id):
 def split_post(text):
     logger.info("Splitting post that is too long for twitter.")
     first = text
+    second = "" # to initialize
     # We first try to split the post by paragraphs, and send as many as can fit in the first post,
     # and the rest in the second.
     if "\n" in text:
         paragraphs = text.split("\n")
         i = 1
         while len(first) > 280 and i < len(paragraphs):
-            first = "\n".join(sentences[:(len(sentences) - i)]) + "\n"
-            second = "\n".join(sentences[(len(sentences) - i):])
+            first = "\n".join(paragraphs[:(len(paragraphs) - i)]) + "\n"
+            second = "\n".join(paragraphs[(len(paragraphs) - i):])
             i += 1
     # If post can't be split by paragraph, we try by sentence.
     if len(first) > 280:
