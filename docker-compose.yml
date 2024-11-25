@@ -2,6 +2,7 @@ version: '3.8'
 services:
   crossposter:
     build: .
+    restart: always
     environment:
       BSKY_HANDLE:
       BSKY_PASSWORD:
