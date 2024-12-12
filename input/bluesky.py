@@ -123,7 +123,8 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1), deleted = []):
                 image_data = feed_view.post.embed.images
             elif feed_view.post.embed and hasattr(feed_view.post.embed, "media") and hasattr(feed_view.post.embed.media, "images"):
                 image_data = feed_view.post.embed.media.images
-            elif  feed_view.post.record.embed and hasattr(feed_view.post.record.embed, "video"):
+            elif  feed_view.post.record.embed and (hasattr(feed_view.post.record.embed, "video") \
+                or (hasattr(feed_view.post.record.embed, "media") and hasattr(feed_view.post.record.embed.media, "video"))):
                 video_data = get_video_data(feed_view)
                 media = {
                     "type": "video",
@@ -251,9 +252,13 @@ def get_quote_post(post):
 
 def get_video_data(post_data):
     did = post_data["post"]["author"]["did"]
-    blob_cid = post_data["post"]["record"]["embed"]["video"].ref.link
+    if hasattr(post_data.post.record.embed, "video"):
+        blob_cid = post_data["post"]["record"]["embed"]["video"].ref.link
+        alt = post_data["post"]["record"]["embed"]["alt"]
+    else:
+        blob_cid = post_data["post"]["record"]["embed"]["media"]["video"].ref.link
+        alt = post_data["post"]["record"]["embed"]["media"]["alt"]
     url = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=%s&cid=%s" % (did, blob_cid)
-    alt = post_data["post"]["record"]["embed"]["alt"]
     # Setting alt to empty string if it is noneType
     if not alt:
         alt = ""
