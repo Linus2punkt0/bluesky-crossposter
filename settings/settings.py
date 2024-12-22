@@ -4,12 +4,6 @@ import os
 # Accepted values: True, False
 Twitter = True
 Mastodon = True
-# log_level determines what messages will be written to the log.
-# "error" means only error messages will be written to the log.
-# "verbose" means all messages will be written to the log.
-# "none" means no messages will be written to the log (not recommended).
-# Accepted values: error, verbose, none
-log_level = "verbose"
 # visibility sets what visibility should be used when posting to Mastodon. Options are "public" for always public, "unlisted" for always unlisted,
 # "private" for always private and "hybrid" for all posts public except responses in threads (meaning first post in a thread is public and the rest unlisted).
 # Accepted values: public, private, hybrid
