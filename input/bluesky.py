@@ -1,5 +1,5 @@
 from loguru import logger
-from settings.auth import BSKY_HANDLE, BSKY_PASSWORD
+from settings.auth import BSKY_HANDLE, BSKY_PASSWORD, BSKY_PDS
 from settings.paths import *
 from settings import settings
 from local.functions import RateLimitedClient, lang_toggle, rate_limit_write, session_cache_read, session_cache_write, on_session_change
@@ -10,15 +10,18 @@ date_in_format = 'YYYY-MM-DDTHH:mm:ss'
 # Setting up connections to bluesky, twitter and mastodon
 def bsky_connect():
     try:
-        bsky = RateLimitedClient()
+        logger.info(f'Connecting to Bluesky: {BSKY_PDS}.')
+        bsky = RateLimitedClient(BSKY_PDS)
         bsky.on_session_change(on_session_change)
         session = session_cache_read()
         if session:
             logger.info("Connecting to Bluesky using saved session.")
             bsky.login(session_string=session)
+            logger.info("Successfully logged in to Bluesky using saved session.")
         else:
             logger.info("Creating new Bluesky session using password and username.")
             bsky.login(BSKY_HANDLE, BSKY_PASSWORD)
+            logger.info("Successfully logged in to Bluesky.")
         session = bsky.export_session_string()
         session_cache_write(session)
         return bsky
@@ -45,10 +48,12 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1), deleted = []):
 #        logger.debug(feed_view)
         # If the post was not written by the account that posted it, it is a repost from another account and we skip it.
         if feed_view.post.author.handle != BSKY_HANDLE:
+            logger.debug(f'Skipping repost from another account: {feed_view.post.author.handle}. ')
             continue
         # Checking if the post has "indexe_at" set, meaning it is a repost.
         repost = False
         created_at = arrow.get(feed_view.post.record.created_at.split(".")[0], date_in_format)
+        logger.debug(f'Post created at: {created_at}')
         if hasattr(feed_view.reason, "indexed_at"):
             repost = True
             created_at = arrow.get(feed_view.reason.indexed_at.split(".")[0], date_in_format)
@@ -56,9 +61,12 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1), deleted = []):
         # to a specific service. Here we check the settings against the language of the post to 
         # see what service it should post to. We also check if posting for a service is enabled
         # at all in the settings. If it shouldn't post to either, we skip it.
+        logger.debug(f'The post was reposted: {repost}')
         langs = feed_view.post.record.langs
         mastodon_post = (lang_toggle(langs, "mastodon") and settings.Mastodon)
         twitter_post = (lang_toggle(langs, "twitter") and settings.Twitter)
+        logger.debug(f'The post have to be posted on Mastodon: {mastodon_post}')
+        logger.debug(f'The post have to be posted on Twitter: {twitter_post}')
         if not mastodon_post and not twitter_post:
             continue
         cid = feed_view.post.cid
