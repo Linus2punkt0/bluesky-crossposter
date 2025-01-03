@@ -5,6 +5,9 @@ import os
 BSKY_HANDLE = ""
 # Generate an app password in the settings on bluesky. DO NOT use your main password.
 BSKY_PASSWORD = ""
+# Your bluesky PDS if you are not using the main instance.
+# Setting this value to None means that the _BASE_API_URL_ ('https://bsky.social') will be used.
+BSKY_PDS = None
 # Your mastodon handle. Not needed for authentication, but used for making "quote posts".
 MASTODON_HANDLE = ""
 # The mastodon instance your account is on.
@@ -22,6 +25,7 @@ TWITTER_ACCESS_TOKEN_SECRET = ""
 # Override settings with environment variables if they exist
 BSKY_HANDLE = os.environ.get('BSKY_HANDLE') if os.environ.get('BSKY_HANDLE') else BSKY_HANDLE
 BSKY_PASSWORD = os.environ.get('BSKY_PASSWORD') if os.environ.get('BSKY_PASSWORD') else BSKY_PASSWORD
+BSKY_PDS = os.environ.get('BSKY_PDS') if os.environ.get('BSKY_PDS') else BSKY_PDS
 MASTODON_INSTANCE = os.environ.get('MASTODON_INSTANCE') if os.environ.get('MASTODON_INSTANCE') else MASTODON_INSTANCE
 MASTODON_HANDLE = os.environ.get('MASTODON_HANDLE') if os.environ.get('MASTODON_HANDLE') else MASTODON_HANDLE
 MASTODON_TOKEN = os.environ.get('MASTODON_TOKEN') if os.environ.get('MASTODON_TOKEN') else MASTODON_TOKEN
