@@ -5,7 +5,7 @@ from settings import settings
 from local.functions import RateLimitedClient, lang_toggle, rate_limit_write, session_cache_read, session_cache_write, on_session_change
 import arrow, os
 
-date_in_format = 'YYYY-MM-DDTHH:mm:ss'
+
 
 # Setting up connections to bluesky, twitter and mastodon
 def bsky_connect():
@@ -52,11 +52,11 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1), deleted = []):
             continue
         # Checking if the post has "indexe_at" set, meaning it is a repost.
         repost = False
-        created_at = arrow.get(feed_view.post.record.created_at.split(".")[0], date_in_format)
+        created_at = get_date(feed_view.post.record.created_at.split(".")[0])
         logger.debug(f'Post created at: {created_at}')
         if hasattr(feed_view.reason, "indexed_at"):
             repost = True
-            created_at = arrow.get(feed_view.reason.indexed_at.split(".")[0], date_in_format)
+            created_at = get_date(feed_view.reason.indexed_at.split(".")[0])
         # The language settings on posts are used to determine if a post should be crossposted
         # to a specific service. Here we check the settings against the language of the post to 
         # see what service it should post to. We also check if posting for a service is enabled
@@ -184,6 +184,15 @@ def get_posts(timelimit = arrow.utcnow().shift(hours = -1), deleted = []):
             # Saving post to posts dictionary
             posts[cid] = post_info;
     return posts, deleted
+
+# Sometimes the date string is given in a different format, this is dealt with here.
+def get_date(date_string):
+    date_in_format = 'YYYY-MM-DDTHH:mm:ss'
+    try:
+        date = arrow.get(date_string, date_in_format)
+    except:
+        date = arrow.get(date_string, date_in_format+"ZZ")
+    return date
 
 def get_allowed_reply(post):
         reply_restriction = post.threadgate
