@@ -198,7 +198,7 @@ def get_allowed_reply(post):
         reply_restriction = post.threadgate
         if reply_restriction is None:
             return "All"
-        if len(reply_restriction.record.allow) == 0:
+        if not reply_restriction.record.allow or len(reply_restriction.record.allow) == 0:
             return "None"
         if reply_restriction.record.allow[0].py_type == "app.bsky.feed.threadgate#followingRule":
             return "Following"
