@@ -1,4 +1,4 @@
-from loguru import logger
+from local.functions import logger
 from settings.auth import BSKY_HANDLE, BSKY_PASSWORD, BSKY_PDS
 from settings.paths import *
 from settings import settings

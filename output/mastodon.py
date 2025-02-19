@@ -1,5 +1,5 @@
 from mastodon import Mastodon
-from loguru import logger
+from local.functions import logger
 from settings import settings
 from settings.auth import *
 
