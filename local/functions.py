@@ -164,11 +164,12 @@ def post_cache_read():
     return cache
 
 def post_cache_write(cache):
-    logger.info("Saving post cache.")
-    if not cache and os.path.exists(post_cache_path):
-        os.remove(post_cache_path)
-        logger.info("Cache empty, nothing saved.")
+    if not cache:
+        if os.path.exists(post_cache_path):
+            os.remove(post_cache_path)
+        logger.info("No posts in cache, nothing to save.")
         return
+    logger.info("Saving post cache.")
     append_write = "w"
     for post_id in cache:
         timestamp = str(cache[post_id].timestamp())
