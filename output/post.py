@@ -1,5 +1,5 @@
 import random, string, urllib, arrow, requests, traceback
-from loguru import logger
+from local.functions import logger
 from settings import settings 
 from settings.paths import *
 from local.db import db_write

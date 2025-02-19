@@ -10,8 +10,9 @@ import  os, shutil, re, arrow, sys
 # Setting up logging
 logger.remove()
 log_format = "<yellow>{time:YYYY-MM-DD HH:mm:ss}</yellow> <lvl>[{level}]: {message}</lvl> <yellow>({function} {file}:{line})</yellow>"
-logger.add(sys.stdout, format=log_format)
+logger.add(sys.stdout, format=log_format, level=settings.log_level)
 logger.add("%s/kamrat_{time:YYMMDD}.log" % log_path,
+        level=settings.log_level,
         format=log_format, 
         rotation="00:00", retention="1 week")
 

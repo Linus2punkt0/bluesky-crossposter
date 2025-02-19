@@ -1,5 +1,5 @@
 from settings.paths import *
-from loguru import logger
+from local.functions import logger
 import json, os, shutil, arrow
 
 # Function for writing new lines to the database
