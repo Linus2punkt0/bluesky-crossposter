@@ -1,3 +1,7 @@
+# Update Spring 2025
+
+A new version of the poster is coming up, and in preparation removing the settings-files from the repo and replacing them with txt-versions, so as not to overwrite user settings on update. The new version will be launched in a beta branch, and for those wanting to try it out (and later anyone upgrading) I recommend cloning a whole new version of the poster and moving copies of the database and settings into that one.
+
 # Update Fall 2024
 
 New functionality has been added over the fall, including functionality to handle Blueskys new video functions. Another new function is cross-deletion, meaning if you delete a post within one hour of posting it on Bluesky, it will also be deleted on the other platforms. This function can be disabled in settings by setting cross_delete to False.
