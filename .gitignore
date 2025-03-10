@@ -6,3 +6,4 @@ backups/*.bak*
 .env
 *.jpg
 *.cache
+settings/*.py
