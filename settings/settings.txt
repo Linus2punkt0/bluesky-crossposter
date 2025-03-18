@@ -1,16 +1,23 @@
 import os
 
+# Setting input source.
+# Accepted values: bluesky, mastodon
+input_source = "bluesky"
 # Enables/disables crossposting to twitter and mastodon
 # Accepted values: True, False
-Twitter = True
-Mastodon = True
-# visibility sets what visibility should be used when posting to Mastodon. Options are "public" for always public, "unlisted" for always unlisted,
-# "private" for always private and "hybrid" for all posts public except responses in threads (meaning first post in a thread is public and the rest unlisted).
-# Accepted values: public, private, hybrid
-visibility = "hybrid"
+outputs = {
+    "twitter": True,
+    "mastodon": True,
+    "bluesky": True
+}
+# Mastodon has two different ways to write user accounts, with or without server. Setting mastodon_mentions to "account" will use the full account (username@server.name),
+# while "username" will switch it to just the username. This setting is only relevant if mastodon is used as input. If mentions (not mastodon_mentions) is set to "url" or "skip",
+# this option will be overwritten, while "strip" will remove the @ from the beginning of either account or user, depending on your setting.
+# Accepted values: username, account
+mastodon_mentions = "account"
 # mentions set what is to be done with posts containing a mention of another user. Options are "ignore",
 # for crossposting with no change, "skip" for skipping posts with mentions, "strip" for removing
-# the starting @ of a username and "url" to replace the username with a link to their bluesky profile.
+# the starting @ of a username and "url" to replace the username with a link to their bluesky/mastodon profile.
 # Accepted values: ignore, skip, strip, url
 mentions = "strip"
 # post_default sets default posting mode. True means all posts will be crossposted unless otherwise specified,
@@ -27,10 +34,16 @@ post_default = True
 # and Twitter. You can have both the actual language of the tweet, and the selector language
 # added to the tweet and it will still work.
 # Accepted values: Any language tag in quotes (https://en.wikipedia.org/wiki/IETF_language_tag)
-mastodon_lang = ""
-twitter_lang = ""
+lang_toggle = {
+    "mastodon": None,
+    "twitter": None,
+    "bluesky": None
+}
+
 # quote_posts determines if quote reposts of other users' posts should be crossposted with the quoted post included as a link. If False these posts will be ignored.
 quote_posts = True
+# The reposting on twitter is locked behind a paywall, so the function is disabled by default. If you want to give Elon a bunch of money, I guess go ahead and enable it.
+retweets = False
 # max_retries sets maximum amount of times poster will retry a failed crosspost.
 # Accepted values: Integers greater than 0
 max_retries = 5
@@ -52,23 +65,74 @@ cross_delete = True
 # x percent of ratelimit-limit the crossposter will pause until the ratelimit-reset.
 rate_limit_buffer = 10
 # Sets minimum log level i Loguru logger
-log_level = "INFO"
-
+log_level = "DEBUG"
+# visibility sets what visibility should be used when posting to Mastodon. Options are "public" for always public, "unlisted" for always unlisted,
+# "private" for always private, "hybrid" for all posts public except responses in threads (meaning first post in a thread is public and the rest unlisted)
+# and "inherit". Inherit will translate the settings for who is allowed to reply to posts on Bluesky into the most closely corresponding setting on Mastodon.
+# Accepted values: public, private, hybrid, unlisted, inherit
+mastodon_visibility = "inherit"
+# Allowed reply decides who is allowed to reply to posts on Bluesky and/or Twitter. Options are "all" for all users, "following" for people following you,
+# "mentioned" for people mentioned in the post, and "inherit". Inherit will use the settings from the input source, which is pretty straightforward for Bluesky -> Twitter,
+# but takes a bit of translating between Mastodon and Twitter, as Mastodon limits visibility instead of who can reply.
+# Accepted values: all, following, mentioned, inherit
+allow_reply = "inherit"
+# Privacy settings determines how privacy settings from on service will be translated for the other services. When fetching from a service,
+# visibility (on Mastodon) or settings for who is allowed to reply (Bluesky) is translated to a privacy setting (more about what translates 
+# to what setting can be found in the readme). Then when posting the privacy setting is translated back into a corresponding setting for each
+# service according to the below dictionary. Not every option has a perfect corresponding option on each service, so I had to be a little
+# creative. If you want it a different way, you can change it here. You can also set "False" (without quotes) if you want posts with 
+# specific settings not to be posted to any service.
+# Note that Bluesky and Twitter limit who can respond, while Mastodon limits who can see a post.
+# Allowed settings for Mastodon: "direct", "private", "public", "unlisted", False - https://mastodonpy.readthedocs.io/en/stable/05_statuses.html#writing
+# Allowed settings for Twitter: "following", "mentionedUsers", False - https://docs.tweepy.org/en/stable/client.html?highlight=mentionedusers#tweepy.Client.create_tweet
+# Allowed settings for Bluesky: "everybody", "mentioned", "following", "nobody", "list_uri" (the uri of a list you want to restrict replies to), False
+privacy = {
+    "public": {
+        "mastodon": "public",
+        "bluesky": "everybody",
+        "twitter": "everybody"
+    },
+    "following": {
+        "mastodon": "private",
+        "bluesky": "following",
+        "twitter": "following"
+    },
+    # Though Bluesky has a setting for only letting followers reply, it can for some reason not be set using the API.
+    "followers": {
+        "mastodon": "private",
+        "bluesky": "following",
+        "twitter": "following"
+    },
+    "unlisted": {
+        "mastodon": "unlisted",
+        "bluesky": "following",
+        "twitter": "following"
+    },
+    "mentioned": {
+        "mastodon": "mentioned",
+        "bluesky": "mentioned",
+        "twitter": "mentionedUsers"
+    }
+}
 
 # Override settings with environment variables if they exist
-Twitter = os.environ.get('TWITTER_CROSSPOSTING').lower() == 'true' if os.environ.get('TWITTER_CROSSPOSTING') else Twitter
-Mastodon = os.environ.get('MASTODON_CROSSPOSTING').lower() == 'true' if os.environ.get('MASTODON_CROSSPOSTING') else Mastodon
-log_level = os.environ.get('LOG_LEVEL').lower() == 'true' if os.environ.get('LOG_LEVEL') else log_level
-visibility = os.environ.get('MASTODON_VISIBILITY') if os.environ.get('MASTODON_VISIBILITY') else visibility
+input_source = os.environ.get('INPUT_SOURCE') if os.environ.get('INPUT_SOURCE') else input_source
+outputs["twitter"] = os.environ.get('TWITTER_CROSSPOSTING').lower() == 'true' if os.environ.get('TWITTER_CROSSPOSTING') else outputs["twitter"]
+outputs["mastodon"] = os.environ.get('MASTODON_CROSSPOSTING').lower() == 'true' if os.environ.get('MASTODON_CROSSPOSTING') else outputs["mastodon"]
+outputs["bluesky"] = os.environ.get('BLUESKY_CROSSPOSTING').lower() == 'true' if os.environ.get('BLUESKY_CROSSPOSTING') else outputs["bluesky"]
+mastodon_mentions = os.environ.get('MASTODON_MENTIONS') if os.environ.get('MASTODON_MENTIONS') else mastodon_mentions
 mentions = os.environ.get('MENTIONS') if os.environ.get('MENTIONS') else mentions
 post_default = os.environ.get('POST_DEFAULT').lower() == 'true' if os.environ.get('POST_DEFAULT') else post_default
-mastodon_lang = os.environ.get('MASTODON_LANG') if os.environ.get('MASTODON_LANG') else mastodon_lang
-twitter_lang = os.environ.get('TWITTER_LANG') if os.environ.get('TWITTER_LANG') else twitter_lang
-quote_posts = os.environ.get('QUOTE_POSTS') if os.environ.get('QUOTE_POSTS') else quote_posts
+lang_toggle = os.environ.get('LANG_TOGGLE') if os.environ.get('LANG_TOGGLE') else lang_toggle
+quote_posts = os.environ.get('QUOTE_POSTS').lower() == 'true' if os.environ.get('QUOTE_POSTS') else quote_posts
+retweets = os.environ.get('RETWEETS').lower() == 'true' if os.environ.get('RETWEETS') else quote_posts
 max_retries = int(os.environ.get('MAX_RETRIES')) if os.environ.get('MAX_RETRIES') else max_retries
 post_time_limit = int(os.environ.get('POST_TIME_LIMIT')) if os.environ.get('POST_TIME_LIMIT') else post_time_limit
 max_per_hour = int(os.environ.get('MAX_PER_HOUR')) if os.environ.get('MAX_PER_HOUR') else max_per_hour
-overflow_posts = os.environ.get('OVERFLOW_POST') if os.environ.get('OVERFLOW_POST') else overflow_posts
+overflow_posts = int(os.environ.get('OVERFLOW_POST')) if os.environ.get('OVERFLOW_POST') else overflow_posts
+cross_delete = int(os.environ.get('CROSS_DELETE')).lower() == 'true' if os.environ.get('CROSS_DELETE') else cross_delete
 rate_limit_buffer = int(os.environ.get('RATE_LIMIT_BUFFER')) if os.environ.get('RATE_LIMIT_BUFFER') else rate_limit_buffer
-log_level = os.environ.get('LOG_LEVEL') if os.environ.get('LOG_LEVEL') else log_level
-cross_delete = os.environ.get('CROSS_DELETE') if os.environ.get('CROSS_DELETE') else cross_delete
+log_level = int(os.environ.get('LOG_LEVEL')) if os.environ.get('LOG_LEVEL') else log_level
+mastodon_visibility = os.environ.get('MASTODON_VISIBILITY') if os.environ.get('MASTODON_VISIBILITY') else mastodon_visibility
+allow_reply = os.environ.get('ALLOW_REPLY') if os.environ.get('ALLOW_REPLY') else allow_reply
+privacy = os.environ.get('PRIVACY') if os.environ.get('PRIVACY') else privacy

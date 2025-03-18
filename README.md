@@ -1,36 +1,61 @@
-# Update Spring 2025
+The Bluesky Crossposter is a python application that automatically takes post from one service (Bluesky or Mastodon) and posts them to one or more other services (Bluesky, Mastodon and/or Twitter). The application can handle posts, threads, quote posts*, reposts**, deletes, media (including alt text) and privacy settings***
 
-A new version of the poster is coming up, and in preparation removing the settings-files from the repo and replacing them with txt-versions, so as not to overwrite user settings on update. The new version will be launched in a beta branch, and for those wanting to try it out (and later anyone upgrading) I recommend cloning a whole new version of the poster and moving copies of the database and settings into that one.
+**Quote posts only work fully on your own posts, as other's posts don't necessarily exist on the target service. Otherwise posts will be sent as a post with an included link (if enabled in settings). They also don't work on Mastoon, since Mastodon doesn't have a quote post function, so there they will be converted to replies (if qoute of yourself) or a post with a url (if quote of someone else).*
 
-# Update Fall 2024
+***Reposts on twitter are disabled by default as this requires the paid version of the API*
 
-New functionality has been added over the fall, including functionality to handle Blueskys new video functions. Another new function is cross-deletion, meaning if you delete a post within one hour of posting it on Bluesky, it will also be deleted on the other platforms. This function can be disabled in settings by setting cross_delete to False.
+****More information futher down.*
 
-This will probably be the last update for a while, except for some bug fixes if needed. Before further updates the poster would probably need some major rewrites to make it be less of a mess.
+# Setup
 
-# Mk 2
+To get started, make copies of the txt-files in the settings folder with .py file endings. Input the necessary information in each file, most importantly the necessary keys and passwords in auth.py.
 
-Version 2 of the crossposter has now been released. The new version contains a bunch of new options, along with fixes and restructuring. To start using the new version I recommend making a new, separate installation and transferring your settings and database to the new version. 
+In settings.py you can configure the poster to work the way you want it, setting what inputs and outputs to use, how mentions and quote posts are handled etc. Finally set up a way for the code to be run periodically, for example a cronjob running every five or ten minutes.
 
-New functions include:
-- Reposting your own posts (only works on Mastodon unless you pay for a higher level of twitters API)
-- Quote posts of other people's posts, with their posts included as a link to Bluesky (can be toggled on/off in settings and automatically skips posts from users whos posts are not public).
-- Username handling allows you to either skip posts where you mention another Bluesky user, or cleanup of username so that they are not interpreted as users after being crossposted.
-- Limiting posts per hour, either skipping posts that go over the posts per hour limit, or sending them at a later time.
-
-# bluesky-crossposter
-
-The Bluesky Crossposter is a python script that when running will automatically post your bluesky-posts to mastodon and twitter, excluding responses and reposts. The script can handle threads, quote posts of your own posts, and image posts, including alt text on images. 
-
-To get started, get the necessary keys and passwords and enter them in settings/auth.py. Then fill in your paths in settings/path.py. Finally set up a way for the code to be run periodically, for example a cronjob running every five or ten minutes.
-
-When first run, or run without a database file, all posts within the timelimit set by postTimeLimit in settings/settings.py will be posted.
-
-In the settings.py you can also disable posting to twitter or mastodon if you only want to post to one of them. Just change "True" to "False" for the service you want to disable. You can also disable logging if you have limited space where the program will run.
-
-The file settings.py now also allows (mis)using blueskys language function by designating a language that when set can be used to decide if a specific post should or should not be crossposted. More info can be found in the file.
+When first run, or run without a database file, all posts within the timelimit set by postTimeLimit in settings/settings.py will be posted. If you have used a previous version of the crossposter, place database.json-file in the db folder, and it will be converted to the new format upon first run.
 
 ## Running with Docker
 The included Dockerfile and docker-compose file can be used to run the service in a docker container. Configuration options can be set in the docker-compose file, added to an .env file (see env.example) or injected as environment variables in some other way. An additional configuration option, RUN_INTERVAL, is provided to set the interval in seconds for which to check for new posts.
 
-Bluesky Crossposter™©® developed by denvitadrogen
+**NOTE!** Crossposter Mk 3 has not been tested in docker, meaning there might be issues to resolve.
+
+##  Privacy settings
+
+Every service manages post privacy differently. Most notably, Mastodon limits who can view posts, while Bluesky and Twitter limits who can interact. There are several options for privacy settings for posts, with the default being "inherit". When mastodon_visibility and/or allow_reply is set to inherit, the poster will try to translate the settings from the input source to the most closely resembling setting for the output. Exakt behavior can be tweaked in settings. This is the default:
+
+### Bluesky -> Crossposter
+
+| Bluesky       | Crossposter   |
+| ------------- | ------------- |
+| Everybody     | Public        |
+| Nobody        | Mentioned     |
+| Followers     | Followers     |
+| Following     | Following     |
+| Mentioned     | Mentioned     |
+
+### Mastodon -> Crossposter
+
+| Mastodon      | Crossposter   |
+| ------------- | ------------- |
+| Public        | Public        |
+| Direct        | Mentioned     |
+| Private       | Followers     |
+| Unlisted      | Unlisted      |
+| Following     | Following     |
+
+
+### Crossposter -> Outputs
+
+| Crossposter   | Mastodon      | Twitter       | Bluesky       |
+| ------------- | ------------- | ------------- | ------------- |
+| Public        | Public        | Everybody     | Everybody     |
+| Following     | Private       | Following     | Following     |
+| Followers     | Private       | Following     | Following*    |
+| Unlisted      | Unlisted      | Following     | Following     |
+| Mentioned     | Mentioned     | Mentioned     | Mentioned     |
+
+
+*Though Bluesky has a setting for only letting followers reply, it can for some reason not be set using the API. Keeping the option in case this changes.
+
+
+-----
