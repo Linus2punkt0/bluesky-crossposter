@@ -1,3 +1,9 @@
+# Mk3 in beta
+
+Crossposter Mk3 is now in beta. You can find it in the branch poster-mk3 if you wish to try it out. I highly recommend setting up a new folder and migrating a copy of your database over, and not updating in your current running folder, as the database will be formatted, and issues could cause it to be corrupted. 
+
+The new version allows for Mastodon to be used as input and Bluesky as output, among other changes. The new format will make it easier to add new inputs and outputs in the future.
+
 # Update Spring 2025
 
 A new version of the poster is coming up, and in preparation removing the settings-files from the repo and replacing them with txt-versions, so as not to overwrite user settings on update. The new version will be launched in a beta branch, and for those wanting to try it out (and later anyone upgrading) I recommend cloning a whole new version of the poster and moving copies of the database and settings into that one.
