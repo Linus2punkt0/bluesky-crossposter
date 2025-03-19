@@ -9,18 +9,18 @@ from main.db import database
 # Getting posts from bluesky
 
 
-handle = "denvitadrogen.se"
+
 def get_posts():
     bsky = bsky_connect()
     logger.info("Gathering posts from Bluesky")
     posts = []
     # Getting feed of user
-    profile_feed = bsky.app.bsky.feed.get_author_feed({'actor': handle})
+    profile_feed = bsky.app.bsky.feed.get_author_feed({'actor': BSKY_HANDLE})
     for status in profile_feed.feed:
         post_id = status.post.cid
         uri = status.post.uri
         # If the post was not written by the account that posted it, it is a repost from another account and is skipped.
-        if status.post.author.handle != handle:
+        if status.post.author.handle != BSKY_HANDLE:
             logger.info(f'Post {post_id} is a repost of another account: ({status.post.author.handle}).')
             continue
         # Checking if the post has "indexe_at" set, meaning it is a repost.
@@ -66,7 +66,7 @@ def get_posts():
         # Setting reply_to_user to the same as user handle and only changing it if the post is an actual reply.
         # Later a check is performed to if the variable is the same as the user handle, so only
         # posts that are not replies, and posts that are part of a thread are posted.
-        reply_to_user = handle
+        reply_to_user = BSKY_HANDLE
         reply_id = ""
         # Checking if post is regular reply
         if status.post.record.reply:
