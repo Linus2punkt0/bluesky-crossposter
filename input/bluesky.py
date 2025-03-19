@@ -79,7 +79,7 @@ def get_posts():
             except:
                 reply_to_user = bsky.get_reply_to_user(status.post.record.reply.parent)
         # If post is a reply to another user, it is skipped
-        if reply_to_user != handle:
+        if reply_to_user != BSKY_HANDLE:
             logger.info(f"Post {post_id} is a reply to another account ({reply_to_user}).")
             continue
         quoted_id = ""
