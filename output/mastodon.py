@@ -89,14 +89,14 @@ def delete_post(origin_id):
 
 # Function for translating visibility settings to Mastodon specifics. More information about this in readme.
 def set_visibility(post):
-    if settings.visibility == "inherit":
+    if settings.mastodon_visibility == "inherit":
         return settings.privacy[post.info["privacy"]]["mastodon"]
-    elif settings.visibility == "unlisted":
+    elif settings.mastodon_visibility == "unlisted":
         return "unlisted"
-    elif settings.visibility == "public":
+    elif settings.mastodon_visibility == "public":
         return "public"
-    elif settings.visibility == "hybrid" and (post.info["reply_id"] or post.info["quote_id"]):
+    elif settings.mastodon_visibility == "hybrid" and (post.info["reply_id"] or post.info["quote_id"]):
         return "unlisted"
-    elif settings.visibility == "hybrid":
+    elif settings.mastodon_visibility == "hybrid":
         return "public"
     
