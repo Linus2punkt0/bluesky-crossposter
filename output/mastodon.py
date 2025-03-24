@@ -33,6 +33,7 @@ def post(item):
     mastodon_client = mastodon_connect()
     text_content = item["post"].text_content("mastodon")
     reply_to_post = database.get_id(item["post"].info["reply_id"], "mastodon")
+    # Checking to see if post is a reply to a post that has not been crossposted
     if item["post"].info["reply_id"] and not reply_to_post:
         logger.info(f"Can't continue thread since {item['post'].info['reply_id']} has not been crossposted")
         return
@@ -44,6 +45,10 @@ def post(item):
         text_content = item["post"].text_content(f"\n{post_url}")
     elif item["type"] == "quote":
         reply_to_post = database.get_id(item["post"].info["quote_id"], "mastodon")
+    # Doing a second check to see if post is a reply or quote of a post that has been skipped or failed to br crossposted.
+    if reply_to_post in ["skipped", "FailedToPost", "duplicate"]:
+        logger.info(f"Post is a reply to or qoute post of a post that has not been crossposted.")
+        return
     visibility = set_visibility(item["post"])
     # If language is not used to toggle what posts to send, it is used simply as the language of the post.
     # Mastodon only takes one language per post, so the first one in the list is used.

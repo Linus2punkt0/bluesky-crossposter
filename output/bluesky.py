@@ -59,7 +59,7 @@ def post(item):
         if item["type"] == "reply":
             logger.info(f"Posting as a reply")
             post_id, post_uri = database.get_id(item["post"].info["reply_id"], "bluesky")
-            if not post_id:
+            if not post_id or post_id in ["skipped", "FailedToPost", "duplicate"]:
                 logger.info(f"Can't continue thread since {item['post'].info['reply_id']} has not been crossposted")
                 continue
             reply_ref, root_ref = get_post_ref(post_uri, post_id)

@@ -52,7 +52,7 @@ Every service manages post privacy differently. Most notably, Mastodon limits wh
 | Following     | Private       | Following     | Following     |
 | Followers     | Private       | Following     | Following*    |
 | Unlisted      | Unlisted      | Following     | Following     |
-| Mentioned     | Mentioned     | Mentioned     | Mentioned     |
+| Mentioned     | Private       | Mentioned     | Mentioned     |
 
 
 *Though Bluesky has a setting for only letting followers reply, it can for some reason not be set using the API. Keeping the option in case this changes.

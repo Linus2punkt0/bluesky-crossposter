@@ -109,9 +109,9 @@ privacy = {
         "twitter": "following"
     },
     "mentioned": {
-        "mastodon": "mentioned",
+        "mastodon": "private",
         "bluesky": "mentioned",
-        "twitter": "mentionedUsers"
+        "twitter": "mentioned"
     }
 }
 
