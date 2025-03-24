@@ -65,10 +65,10 @@ def count_lines(file):
 
 def split_text(text, max_chars):
     posts = []
+    if len(text) < max_chars:
+        return [text]
     # Split the text into paragraphs
     paragraphs = text.split("\n")
-    # Removing empty paragraphs
-    paragraphs = list(filter(None, paragraphs))
     i = 0
     while i < len(paragraphs):
         post = paragraphs[i]
