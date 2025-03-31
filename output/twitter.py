@@ -44,7 +44,7 @@ def post(item):
         if media:
             media_ids = []
             for media_item in media:
-                alt = item["alt"]
+                alt = media_item["alt"]
                 # Abiding by alt character limit
                 if len(alt) > 1000:
                     alt = alt[:996] + "..."
