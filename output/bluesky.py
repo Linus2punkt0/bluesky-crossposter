@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import  traceback, re, ffmpeg, httpx, base64
+import  traceback, re, ffmpeg, httpx, base64, io, sys
 from PIL import Image 
 from operator import itemgetter
 from atproto import  models, client_utils, AtUri, IdResolver
@@ -236,6 +236,9 @@ def create_embed(url, media, media_type):
         elif preview.image:
             logger.warning("Preview image in unknown format, skipping.")
             logger.debug(preview.image)
+        if img_data and sys.getsizeof(img_data) > 976560:
+            logger.warning(f"Preview image too large to post ({sys.getsizeof(img_data)} is larger than max size 976560)")
+            img_data = limit_img_size(img_data, 976560)
         image = None
         # Uploading image data
         if img_data:
@@ -259,6 +262,33 @@ def create_embed(url, media, media_type):
         )
     except Exception as e:
         logger.error(f"failed to create embed, error {e}")
+        logger.debug(traceback.format_exc())
+        return None
+
+def limit_img_size(image_data, target_filesize):
+    logger.info("Attempting to reduce size of preview image")
+    try:
+        img = img_orig = Image.open(io.BytesIO(image_data))
+        aspect = img.size[0] / img.size[1]
+        while True:
+            with io.BytesIO() as buffer:
+                img.save(buffer, format="PNG")
+                data = buffer.getvalue()
+            filesize = len(data)    
+            size_deviation = filesize / target_filesize
+            logger.debug("size: {}; factor: {:.3f}".format(filesize, size_deviation))
+
+            if size_deviation <= 1:
+                return data
+            else:
+                # filesize not good enough => adapt width and height
+                # use sqrt of deviation since applied both in width and height
+                new_width = img.size[0] / size_deviation**0.5    
+                new_height = new_width / aspect
+                # resize from img_orig to not lose quality
+                img = img_orig.resize((int(new_width), int(new_height)))
+    except Exception as e:
+        logger.error(f"Failed to shrink preview image: {e}")
         logger.debug(traceback.format_exc())
         return None
 
