@@ -230,6 +230,8 @@ class Database():
 
     # If database is in old format, this function will read it and convert it to the new.
     def convert_db(self, db_data):
+        # Making a backup of the old database before converting
+        shutil.copyfile(database_path, f"{database_path}_old")
         for line in db_data:
             # Since the old format only used bluesky as input, it will always be the origin
             post = {
