@@ -14,20 +14,27 @@ services:
       TWITTER_APP_SECRET:
       TWITTER_ACCESS_TOKEN:
       TWITTER_ACCESS_TOKEN_SECRET:
-      # defaults to true, change to false if you don't want to enable it
+      # See defaults in settings.py
+      INPUT_SOURCE:
       TWITTER_CROSSPOSTING: ${TWITTER_CROSSPOSTING:-true}
       MASTODON_CROSSPOSTING: ${MASTODON_CROSSPOSTING:-true}
-      LOG_LEVEL:
-      MASTODON_VISIBILITY:
+      BLUESKY_CROSSPOSTING: ${MASTODON_CROSSPOSTING:-false}
+      MASTODON_MENTIONS:
       MENTIONS:
       POST_DEFAULT:
-      MASTODON_LANG:
-      TWITTER_LANG:
+      LANG_TOGGLE:
       QUOTE_POSTS:
+      RETWEETS:
       MAX_RETRIES:
       POST_TIME_LIMIT:
       MAX_PER_HOUR:
       OVERFLOW_POST:
+      CROSS_DELETE:
+      RATE_LIMIT_BUFFER:
+      LOG_LEVEL:
+      MASTODON_VISIBILITY:
+      ALLOW_REPLY:
+      PRIVACY:
       # job interval, defaults to 1 hour(the max lag between bluesky and twitter/mastodon)
       RUN_INTERVAL: ${RUN_INTERVAL:-3600}
     volumes:

@@ -1,108 +1,105 @@
-import tweepy
-from local.functions import logger
-from settings import settings 
+import traceback
+from main.functions import logger
+from main.connections import twitter_api_connect, twitter_client_connect
 from settings.auth import *
+from settings import settings
+from main.db import database
 
-if settings.Twitter:
-    twitter_client = tweepy.Client(consumer_key=TWITTER_APP_KEY,
-                        consumer_secret=TWITTER_APP_SECRET,
-                        access_token=TWITTER_ACCESS_TOKEN,
-                        access_token_secret=TWITTER_ACCESS_TOKEN_SECRET)
 
-    tweepy_auth = tweepy.OAuth1UserHandler(TWITTER_APP_KEY, TWITTER_APP_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET)
-    twitter_api = tweepy.API(tweepy_auth)
+# Function for processing output queue
+def output(queue):
+    for item in queue:
+        try:
+            if item["type"] == "repost" and settings.retweets:
+                repost(item)
+            else:
+                post(item)
+        except Exception as e:
+            database.failed_post(item["id"], "twitter")
+            logger.error(f"Failed to post {item['id']}: {e}")
+            logger.debug(traceback.format_exc())
 
 # Function for posting tweets
-def tweet(post, reply_to_post, quoted_post, media, allowed_reply):
+def post(item):
+    twitter_api = twitter_api_connect()
+    twitter_client = twitter_client_connect()
+    text_content = item["post"].text_content("twitter")
+    quote_id = database.get_id(item["post"].info["quote_id"], "twitter")
+    reply_id = database.get_id(item["post"].info["reply_id"], "twitter")
+    if item["post"].info["reply_id"] and not reply_id or reply_id in ["skipped", "FailedToPost", "duplicate"]:
+        logger.info(f"Can't continue thread since {item['post'].info['reply_id']} has not been crossposted")
+        return
+    if item["post"].info["quote_id"] and not quote_id or reply_id in ["skipped", "FailedToPost", "duplicate"]:
+        logger.info(f"Can't create quote post since {item['post'].info['quote_id']} has not been crossposted")
+        return
     media_ids = None
-    reply_settings = set_reply_settings(allowed_reply)
-    # If post includes images, images are uploaded so that they can be included in the tweet
-    if media:
-        media_ids = []
-        for item in media:
-            alt = item["alt"]
-            # Abiding by alt character limit
-            if len(alt) > 1000:
-                alt = alt[:996] + "..."
-            res = twitter_api.media_upload(item["filename"])
-            id = res.media_id
-            # If alt text was added to the image on bluesky, it's also added to the image on twitter.
-            if alt:
-                logger.info("Uploading media " + item["filename"] + " with alt: " + alt + " to twitter")
-                twitter_api.create_media_metadata(id, alt)
-            media_ids.append(id)
-    # Checking if the post is longer than 280 characters, and if so sending to the
-    # splitPost-function.
-    partTwo = ""
-    if len(post) > 280:
-        post, partTwo = split_post(post)
-    a = twitter_client.create_tweet(text=post, reply_settings=reply_settings, quote_tweet_id=quoted_post, in_reply_to_tweet_id=reply_to_post, media_ids=media_ids)
-    logger.info("Posted to twitter")
-    id = a[0]["id"]
-    if partTwo:
-        a = twitter_client.create_tweet(text=partTwo, in_reply_to_tweet_id=id)
-        id = a[0]["id"]
-    return id
+    reply_settings = set_reply_settings(item["post"])
+    if reply_settings == "everybody":
+        reply_settings = None
+    # putting media in a new variable so that I can remove it after posting it
+    media = item["post"].media
+    for text_post in text_content:
+        logger.info(f"Posting \"{text_post}\" to Twitter.")
+        # If post includes images, images are uploaded so that they can be included in the tweet
+        if media:
+            media_ids = []
+            for media_item in media:
+                alt = media_item["alt"]
+                # Abiding by alt character limit
+                if len(alt) > 1000:
+                    alt = alt[:996] + "..."
+                logger.info(f'Uploading media {media_item["filename"]}')
+                res = twitter_api.media_upload(media_item["filename"])
+                logger.debug(res)
+                id = res.media_id
+                # If alt text was added to the image on bluesky, it's also added to the image on twitter.
+                if alt:
+                    logger.info(f"Adding alt-text: {alt}")
+                    res = twitter_api.create_media_metadata(id, alt)
+                    logger.debug(res)
+                media_ids.append(id)
+            media = []
+        logger.debug(f"text={text_post}, reply_settings={reply_settings}, quote_tweet_id={quote_id}, in_reply_to_tweet_id={reply_id}, media_ids={media_ids}")
+        a = twitter_client.create_tweet(text=text_post, reply_settings=reply_settings, quote_tweet_id=quote_id, in_reply_to_tweet_id=reply_id, media_ids=media_ids)
+        logger.debug(a)
+        # If a quote post gets split, only the first post quotes, and the second becomes just a reply to that post
+        quote_id = None
+        reply_id = a[0]["id"]
+    database.update(item["id"], "twitter", reply_id)
 
-def retweet(tweet_id):
-    a = twitter_client.retweet(tweet_id)
-    logger.info("retweeted tweet " + str(tweet_id))
+# Function for reposting tweet. Must be enabled in settings
+# as it required the paid version of the Twitter API.
+def repost(id):
+    twitter_client = twitter_client_connect()
+    a = twitter_client.retweet(id)
+    logger.info(f"retweeted tweet {id}")
+    logger.debug(a)
 
-def delete(tweet_id):
-    logger.info("Deleting tweet with id " + tweet_id)
+# Function for deleting tweets. Takes ID of post from origin (Mastodon or Bluesky)
+def delete_post(origin_id):
+    twitter_api = twitter_api_connect()
+    post_id = database.get_id(origin_id, "twitter")
+    logger.info(f"Deleting tweet with id {post_id}")
     try:
-        a = twitter_api.destroy_status(tweet_id)
+        a = twitter_api.destroy_status(post_id)
         logger.debug(a)
     except Exception as e:
         logger.debug(e)
         if "No status found with that ID" in str(e):
-            logger.info("Tweet with id %s does not exist" % tweet_id)
+            logger.info(f"Tweet with id {post_id} does not exist")
 
-# Function for splitting up posts that are too long for twitter.
-def split_post(text):
-    logger.info("Splitting post that is too long for twitter.")
-    first = text
-    second = "" # to initialize
-    # We first try to split the post by paragraphs, and send as many as can fit in the first post,
-    # and the rest in the second.
-    if "\n" in text:
-        paragraphs = text.split("\n")
-        i = 1
-        while len(first) > 280 and i < len(paragraphs):
-            first = "\n".join(paragraphs[:(len(paragraphs) - i)]) + "\n"
-            second = "\n".join(paragraphs[(len(paragraphs) - i):])
-            i += 1
-    # If post can't be split by paragraph, we try by sentence.
-    if len(first) > 280:
-        first = text
-        sentences = text.split(". ")
-        i = 1
-        while len(first) > 280 and i < len(sentences):
-            first = ". ".join(sentences[:(len(sentences) - i)]) + "."
-            second = ". ".join(sentences[(len(sentences) - i):])
-            i += 1
-    # If splitting by sentence does not result in a short enough post, we try splitting by words instead.
-    if len(first) > 280:
-        first = text
-        words = text.split(" ")
-        i = 1
-        while len(first) > 280 and i < len(words):
-            first = " ".join(words[:(len(words) - i)])
-            second = " ".join(words[(len(words) - i):])
-            i += 1
-    # If splitting has ended up with either a first or second part that is too long, we return empty
-    # strings and the post is not sent to twitter.
-    if len(first) > 280 or len(second) > 280:
-        logger.info("Was not able to split post.", "error")
-        first = ""
-        second = ""
-    return first, second
-
-
-def set_reply_settings(allowed):
+# Translating reply restrictions to Twitter specific versions. More information in readme.
+def set_reply_settings(post):
     reply_settings = None
-    if allowed == "None" or allowed == "Mentioned":
-        reply_settings = "mentionedUsers"
-    elif allowed == "Following":
+    if settings.allow_reply == "inherit":
+        return settings.privacy[post.info["privacy"]]["twitter"]
+    elif settings.allow_reply == "following":
         reply_settings = "following"
+    elif settings.allow_reply == "mentioned":
+        reply_settings = "mentionedUsers"
     return reply_settings
+    
+
+
+
+
