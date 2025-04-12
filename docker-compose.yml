@@ -2,7 +2,7 @@ version: '3.8'
 services:
   crossposter:
     build: .
-    image: ghcr.io/Linus2punkt0/bluesky-crossposter:latest
+    image: ghcr.io/linus2punkt0/bluesky-crossposter:latest
     restart: always
     environment:
       BSKY_HANDLE:
