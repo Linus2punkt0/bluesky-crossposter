@@ -125,7 +125,7 @@ mentions = os.environ.get('MENTIONS') if os.environ.get('MENTIONS') else mention
 post_default = os.environ.get('POST_DEFAULT').lower() == 'true' if os.environ.get('POST_DEFAULT') else post_default
 lang_toggle = os.environ.get('LANG_TOGGLE') if os.environ.get('LANG_TOGGLE') else lang_toggle
 quote_posts = os.environ.get('QUOTE_POSTS').lower() == 'true' if os.environ.get('QUOTE_POSTS') else quote_posts
-retweets = os.environ.get('RETWEETS').lower() == 'true' if os.environ.get('RETWEETS') else quote_posts
+retweets = os.environ.get('RETWEETS').lower() == 'true' if os.environ.get('RETWEETS') else retweets
 max_retries = int(os.environ.get('MAX_RETRIES')) if os.environ.get('MAX_RETRIES') else max_retries
 post_time_limit = int(os.environ.get('POST_TIME_LIMIT')) if os.environ.get('POST_TIME_LIMIT') else post_time_limit
 max_per_hour = int(os.environ.get('MAX_PER_HOUR')) if os.environ.get('MAX_PER_HOUR') else max_per_hour
