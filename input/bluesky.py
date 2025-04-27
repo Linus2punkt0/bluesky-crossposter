@@ -118,7 +118,7 @@ def get_posts():
             video_data = get_video_data(status)
             media = {
                 "type": "video",
-                "items": video_data
+                "items": [video_data]
             }
             logger.debug(f"Found video: {video_data}")
         if image_data:
