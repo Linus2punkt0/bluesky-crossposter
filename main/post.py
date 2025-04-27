@@ -81,7 +81,7 @@ class Post():
 
     # Function for getting included video. 
     def get_video(self):
-        for video in self.info["media"]:
+        for video in self.info["media"]["items"]:
             # Giving the video just a random filename
             filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10)) + ".mp4"
             filename = image_path + filename
