@@ -29,7 +29,7 @@ def post(item):
     if item["post"].info["reply_id"] and not reply_id or reply_id in ["skipped", "FailedToPost", "duplicate"]:
         logger.info(f"Can't continue thread since {item['post'].info['reply_id']} has not been crossposted")
         return
-    if item["post"].info["quote_id"] and not quote_id or reply_id in ["skipped", "FailedToPost", "duplicate"]:
+    if item["type"] == "quote" and quote_id in ["skipped", "FailedToPost", "duplicate"]:
         logger.info(f"Can't create quote post since {item['post'].info['quote_id']} has not been crossposted")
         return
     media_ids = None
