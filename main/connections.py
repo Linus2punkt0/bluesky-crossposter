@@ -49,7 +49,8 @@ def twitter_client_connect():
     twitter_client = tweepy.Client(consumer_key=TWITTER_APP_KEY,
                         consumer_secret=TWITTER_APP_SECRET,
                         access_token=TWITTER_ACCESS_TOKEN,
-                        access_token_secret=TWITTER_ACCESS_TOKEN_SECRET)
+                        access_token_secret=TWITTER_ACCESS_TOKEN_SECRET,
+                        wait_on_rate_limit=True)
     
     return twitter_client
 
