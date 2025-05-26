@@ -1,11 +1,9 @@
-from main.functions import logger, cleanup, session_status, terminate_session
+from main.functions import logger, cleanup
 from input.fetch import get_posts
 from output.send import send_posts
 from main.db import database
 
 def run():
-    if session_status():
-        exit()
     queues = get_posts()
     # If no new or deleted posts are found, we can skip further actions.
     if not new_posts(queues) and not database.deleted:
@@ -15,7 +13,6 @@ def run():
     send_posts(queues)
     database.save()
     cleanup()
-    terminate_session()
 
 # Checking queues to see if they contain posts
 def new_posts(queues):

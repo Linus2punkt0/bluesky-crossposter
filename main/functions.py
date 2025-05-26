@@ -168,20 +168,22 @@ def split_words(text, max_chars):
         i = o
     return posts
 
-# Function for starting and ending crossposter session, to avoid multiple sessions running concurrently
-def session_status():
-    logger.info("Checking running status of application")
-    if not os.path.exists(running_status_path):
-        logger.info("Crossposter is not already running, starting new session.")
-        file = open(running_status_path, "w")
+# Due to an extremely harsh rate limit for twitter crossposter sessions might run long.
+# To avoid duplicate processes a session file is created whenever twitter is running,
+# and if the file already exists the crossposter will skip posting to twitter.
+def twitter_running():
+    logger.info("Checking status of twitter rate limit.")
+    if not os.path.exists(twitter_running_path):
+        logger.info("Crossposter does not have a current instance running, starting one.")
+        file = open(twitter_running_path, "w")
         file.write(f"{arrow.now()}")
         file.close()
         return False
     else:
-        logger.info("Crossposter is already running, terminating session.")
+        logger.info("Crossposter is already trying to post to twitter, skipping for now.")
         return True
 
-def terminate_session():
-    logger.info("Crossposter finished, terminating session.")
-    if os.path.exists(running_status_path):
-        os.remove(running_status_path)
+def twitter_finished():
+    logger.info("Finished posting to twitter, deleting session file.")
+    if os.path.exists(twitter_running_path):
+        os.remove(twitter_running_path)
