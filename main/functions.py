@@ -1,4 +1,4 @@
-import  os, shutil, re, sys, traceback
+import  os, shutil, re, sys, traceback, arrow
 from loguru import logger
 from settings.auth import *
 from settings.paths import *
@@ -168,4 +168,20 @@ def split_words(text, max_chars):
         i = o
     return posts
 
+# Function for starting and ending crossposter session, to avoid multiple sessions running concurrently
+def session_status():
+    logger.info("Checking running status of application")
+    if not os.path.exists(running_status_path):
+        logger.info("Crossposter is not already running, starting new session.")
+        file = open(running_status_path, "w")
+        file.write(arrow.now())
+        file.close()
+        return False
+    else:
+        logger.info("Crossposter is already running, terminating session.")
+        return True
 
+def terminate_session():
+    logger.info("Crossposter finished, terminating session.")
+    if os.path.exists(running_status_path):
+        os.remove(running_status_path)
