@@ -174,7 +174,7 @@ def session_status():
     if not os.path.exists(running_status_path):
         logger.info("Crossposter is not already running, starting new session.")
         file = open(running_status_path, "w")
-        file.write(arrow.now())
+        file.write(f"{arrow.now()}")
         file.close()
         return False
     else:
