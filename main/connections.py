@@ -127,9 +127,9 @@ class RateLimitedClient(Client):
     
 # Checks if changes are made to the Bluesky session, meaning the local session file needs to be updated
 def on_session_change(event: SessionEvent, session: Session) -> None:
-    print('Session changed:', event, repr(session))
+    logger.info('Session changed:', event, repr(session))
     if event in (SessionEvent.CREATE, SessionEvent.REFRESH):
-        print('Saving changed session')
+        logger.info('Saving changed session')
         session_cache_write(session.export())
 
 # Reading local Bluesky session file
