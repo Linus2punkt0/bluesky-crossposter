@@ -15,9 +15,7 @@ reply_references = {}
 # Function for processing output queue
 def output(queue):
     logger.info("Posting queue to Bluesky.")
-    logger.debug(queue)
     for item in queue:
-        logger.debug(item)
         try:
             if item["type"] == "repost":
                 repost(item)
@@ -31,7 +29,6 @@ def output(queue):
 
 # Function for sending post
 def post(item):
-    logger.debug(item["post"].info)
     bluesky_client = bsky_connect()
     text_content = item["post"].text_content("bluesky")
     reply_to = None
