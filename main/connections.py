@@ -80,8 +80,7 @@ def bsky_connect():
     except Exception as e:
         logger.error(e)
         if e.response.content.error == "RateLimitExceeded":
-            ratelimit_reset = e.response.headers["RateLimit-Reset"]
-            rate_limit_write(ratelimit_reset)
+            logger.debug("Bluesky ratelimit was exceeded!")
         elif e.response.content.error == "ExpiredToken":
             logger.info("Session expired, removing session file.")
             os.remove(session_cache_path)
@@ -105,11 +104,6 @@ class RateLimitedClient(Client):
         self._limit = self.response.headers.get("RateLimit-Limit")
         self._remaining = self.response.headers.get("RateLimit-Remaining")
         self._reset = self.response.headers.get("RateLimit-Reset")
-        if (int(self._remaining) / int(self._limit)) * 100 < settings.rate_limit_buffer:
-            logger.info("Rate limit buffer reached, after this run poster will pause until %s" % arrow.Arrow.fromtimestamp(self._reset).format("YYYY-MM-DD HH:mm:ss"))
-            rate_limit_write(self._reset)
-        else:
-            logger.info("Bluesky rate limit has %s out of %s remaining." % (self._remaining, self._limit))
 
         return self.response
     
@@ -127,9 +121,9 @@ class RateLimitedClient(Client):
     
 # Checks if changes are made to the Bluesky session, meaning the local session file needs to be updated
 def on_session_change(event: SessionEvent, session: Session) -> None:
-    print('Session changed:', event, repr(session))
+    logger.info('Session changed:', event, repr(session))
     if event in (SessionEvent.CREATE, SessionEvent.REFRESH):
-        print('Saving changed session')
+        logger.info('Saving changed session')
         session_cache_write(session.export())
 
 # Reading local Bluesky session file
@@ -147,22 +141,3 @@ def session_cache_write(session):
     with open(session_cache_path, "w") as file:
         file.write(session)
 
-# Functions for checking and saving ratelimit-reset
-def check_rate_limit():
-    logger.info("Checking if application has reach rate limit buffer limit.")
-    if not os.path.exists(rate_limit_path):
-        return False
-    with open(rate_limit_path, 'r') as file:
-        timestamp = arrow.Arrow.fromtimestamp(file.read())
-        if timestamp > arrow.now():
-            logger.info("Rate limit buffer reached, will resume posting %s" % timestamp.humanize())
-            return True
-        else:
-            os.remove(rate_limit_path)
-            return False
-
-def rate_limit_write(ratelimit_reset):
-    logger.info("Saving ratelimit-reset time")
-    file = open(rate_limit_path, "w")
-    file.write(ratelimit_reset)
-    file.close()

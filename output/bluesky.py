@@ -15,6 +15,7 @@ reply_references = {}
 # Function for processing output queue
 def output(queue):
     for item in queue:
+        logger.debug(item)
         try:
             if item["type"] == "repost":
                 repost(item)

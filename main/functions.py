@@ -64,6 +64,7 @@ def count_lines(file):
 # Functions for splitting posts into smaller chunks if necessary
 
 def split_text(text, max_chars):
+    logger.info(f"Splitting text \"{text}\" into chunks.")
     posts = []
     if len(text) < max_chars:
         return [text]
@@ -85,6 +86,11 @@ def split_text(text, max_chars):
             posts += split_paragraphs(post, max_chars)
         # o will be the number in the array just after the last one that was just added
         i = o
+    # Deleting empty items from post array
+    for index, value in enumerate(posts):
+        if not value:
+            del posts[index]
+    logger.debug(posts)
     return posts
 
 # If a paragraph is too long, it is split into sentances
