@@ -14,6 +14,7 @@ reply_references = {}
 
 # Function for processing output queue
 def output(queue):
+    logger.info("Posting queue to Bluesky.")
     for item in queue:
         try:
             if item["type"] == "repost":
@@ -40,6 +41,9 @@ def post(item):
     media_type = None
     if media:
         media_type = item["post"].info["media"]["type"]
+    reply = False
+    if item["type"] == "reply":
+        reply = True
     for text_post in text_content:
         logger.info(f"Posting \"{text_post}\" to Bluesky")
         # If post contains a single URL, attempting to create a link preview (or repost, if link is to a Bluesky post)
@@ -56,9 +60,14 @@ def post(item):
                 urls = []
         bluesky_post = build_post(text_post, urls, tags)
         # Preparing to post as reply, unless the post it is replying to has not been crossposted
-        if item["type"] == "reply":
+        if reply:
             logger.info(f"Posting as a reply")
-            post_id, post_uri = database.get_id(item["post"].info["reply_id"], "bluesky")
+            # Fetching reply_id. If post is a reply without a reply_id this means
+            # post is replying to "itself", as it is a longer post being split into smaller chunks.
+            reply_id = item["post"].info["reply_id"]
+            if not reply_id:
+                reply_id = item["id"]
+            post_id, post_uri = database.get_id(reply_id, "bluesky")
             if not post_id or post_id in ["skipped", "FailedToPost", "duplicate"]:
                 logger.info(f"Can't continue thread since {item['post'].info['reply_id']} has not been crossposted")
                 continue
@@ -123,6 +132,8 @@ def post(item):
             "reply_ref": reply_ref,
             "root_ref": root_ref
         }
+        # If long posts have had to be split subsequent posts are to be treated as replies
+        reply = True
         database.update(item["id"], "bluesky", reply_ref.cid, reply_ref.uri)
         set_reply_settings(item["post"], reply_ref.uri)
 

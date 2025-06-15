@@ -61,9 +61,6 @@ max_per_hour = 0
 overflow_posts = "retry"
 # If cross_delete is set to true, posts you delete from bluesky within one our of being crossposted will also be deleted from mastodon and twitter
 cross_delete = True
-# Setting a buffer to avoid exceeding the rate limit. The limit is set in percent, and when the ratelimit-remaining reaches
-# x percent of ratelimit-limit the crossposter will pause until the ratelimit-reset.
-rate_limit_buffer = 10
 # Sets minimum log level i Loguru logger
 log_level = "DEBUG"
 # visibility sets what visibility should be used when posting to Mastodon. Options are "public" for always public, "unlisted" for always unlisted,
@@ -131,7 +128,6 @@ post_time_limit = int(os.environ.get('POST_TIME_LIMIT')) if os.environ.get('POST
 max_per_hour = int(os.environ.get('MAX_PER_HOUR')) if os.environ.get('MAX_PER_HOUR') else max_per_hour
 overflow_posts = os.environ.get('OVERFLOW_POST') if os.environ.get('OVERFLOW_POST') else overflow_posts
 cross_delete = os.environ.get('CROSS_DELETE').lower() == 'true' if os.environ.get('CROSS_DELETE') else cross_delete
-rate_limit_buffer = int(os.environ.get('RATE_LIMIT_BUFFER')) if os.environ.get('RATE_LIMIT_BUFFER') else rate_limit_buffer
 log_level = os.environ.get('LOG_LEVEL') if os.environ.get('LOG_LEVEL') else log_level
 mastodon_visibility = os.environ.get('MASTODON_VISIBILITY') if os.environ.get('MASTODON_VISIBILITY') else mastodon_visibility
 allow_reply = os.environ.get('ALLOW_REPLY') if os.environ.get('ALLOW_REPLY') else allow_reply
