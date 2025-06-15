@@ -42,7 +42,7 @@ def get_posts():
         urls = []
         if status.content:
             # Removing paragraph end tag from post to avoid trailing newlines
-            text = re.sub('</p>$', "", post)
+            text = re.sub('</p>$', "", status.content)
             # Using replace to retain newlines before removing all other html
             text = text.replace("<p>", "").replace("</p>", "\n\n").replace("<br />", "\n")
             text = clean_html(text)
