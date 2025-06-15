@@ -69,7 +69,7 @@ def post(item):
             # post is replying to "itself", as it is a longer post being split into smaller chunks.
             reply_id = item["post"].info["reply_id"]
             if not reply_id:
-                reply_id = item["post"].info["id"]
+                reply_id = item["id"]
             post_id, post_uri = database.get_id(reply_id, "bluesky")
             if not post_id or post_id in ["skipped", "FailedToPost", "duplicate"]:
                 logger.info(f"Can't continue thread since {item['post'].info['reply_id']} has not been crossposted")
