@@ -8,6 +8,7 @@ from main.db import database
 
 # Function for processing output queue
 def output(queue):
+    logger.info("Posting queue to Twitter.")
     for item in queue:
         try:
             if item["type"] == "repost" and settings.retweets:

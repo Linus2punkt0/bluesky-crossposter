@@ -14,6 +14,8 @@ reply_references = {}
 
 # Function for processing output queue
 def output(queue):
+    logger.info("Posting queue to Bluesky.")
+    logger.debug(queue)
     for item in queue:
         logger.debug(item)
         try:

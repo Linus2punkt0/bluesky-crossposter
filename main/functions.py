@@ -88,7 +88,7 @@ def split_text(text, max_chars):
         i = o
     # Deleting empty items from post array
     for index, value in enumerate(posts):
-        if not value:
+        if not value or value.isspace():
             del posts[index]
     logger.debug(posts)
     return posts
