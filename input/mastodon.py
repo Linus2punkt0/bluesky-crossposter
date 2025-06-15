@@ -1,4 +1,4 @@
-import arrow, html
+import arrow, html, re
 import settings.settings as settings
 from main.functions import logger, extract_urls, clean_html
 from main.connections import mastodon_connect
@@ -41,8 +41,10 @@ def get_posts():
         text = ""
         urls = []
         if status.content:
+            # Removing paragraph end tag from post to avoid trailing newlines
+            text = re.sub('</p>$', "", post)
             # Using replace to retain newlines before removing all other html
-            text = status.content.replace("<p>", "").replace("</p>", "\n\n").replace("<br />", "\n")
+            text = text.replace("<p>", "").replace("</p>", "\n\n").replace("<br />", "\n")
             text = clean_html(text)
             text = html.unescape(text)
             # Extracting URLs from status
