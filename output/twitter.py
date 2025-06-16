@@ -1,13 +1,16 @@
-import traceback
+import traceback, arrow, json, tweepy
 from main.functions import logger
 from main.connections import twitter_api_connect, twitter_client_connect
 from settings.auth import *
 from settings import settings
+from settings.paths import rate_limit_path
 from main.db import database
 
 
 # Function for processing output queue
 def output(queue):
+    if check_ratelimit_reset():
+        return
     logger.info("Posting queue to Twitter.")
     for item in queue:
         try:
@@ -15,7 +18,11 @@ def output(queue):
                 repost(item)
             else:
                 post(item)
-        except Exception as e:
+        except tweepy.TooManyRequests:
+            logger.error("Twitter rate limit reached!")
+            logger.debug(traceback.format_exc())
+            set_ratelimit_reset(arrow.now().shift(days=1).timestamp())
+        except tweepy.TweepyException as e:
             database.failed_post(item["id"], "twitter")
             logger.error(f"Failed to post {item['id']}: {e}")
             logger.debug(traceback.format_exc())
@@ -62,10 +69,18 @@ def post(item):
             media = []
         logger.debug(f"text={text_post}, reply_settings={reply_settings}, quote_tweet_id={quote_id}, in_reply_to_tweet_id={reply_id}, media_ids={media_ids}")
         a = twitter_client.create_tweet(text=text_post, reply_settings=reply_settings, quote_tweet_id=quote_id, in_reply_to_tweet_id=reply_id, media_ids=media_ids)
-        logger.debug(a)
+        logger.debug(a.headers)
+        logger.debug(a.content)
+        content = json.loads(a.content)
         # If a quote post gets split, only the first post quotes, and the second becomes just a reply to that post
         quote_id = None
-        reply_id = a[0]["id"]
+        reply_id = content["data"]["id"]
+        # Checking remaining rate limit and rate limit reset time
+        remaining_ratelimit = int(a.headers["x-app-limit-24hour-remaining"])
+        reset_time = int(a.headers["x-app-limit-24hour-reset"])
+        if remaining_ratelimit < 1:
+            logger.info("Twitter rate limit has been reached.")
+            set_ratelimit_reset(reset_time)
     database.update(item["id"], "twitter", reply_id)
 
 # Function for reposting tweet. Must be enabled in settings
@@ -101,6 +116,29 @@ def set_reply_settings(post):
     return reply_settings
     
 
+def set_ratelimit_reset(reset):
+    timestamp = arrow.get(reset)
+    logger.info(f"Twitter ratelimit has been reached. Trying again in {timestamp.humanize()}.")
+    logger.info("Saving ratelimit-reset time")
+    file = open(rate_limit_path, "w")
+    file.write(f"{timestamp.timestamp()}")
+    file.close()
 
 
-
+# Functions for checking and saving ratelimit-reset
+def check_ratelimit_reset():
+    logger.info("Checking if crossposter has reached ratelimit for Twitter.")
+    if not os.path.exists(rate_limit_path):
+        return False
+    with open(rate_limit_path, 'r') as file:
+        timestamp = file.read()
+        if timestamp:
+            timestamp = arrow.Arrow.fromtimestamp(timestamp)
+        else:
+            timestamp = arrow.now()
+        if timestamp > arrow.now():
+            logger.info(f"Rate limit buffer reached, will try again {timestamp.humanize()}.")
+            return True
+        else:
+            os.remove(rate_limit_path)
+            return False
