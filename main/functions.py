@@ -64,10 +64,10 @@ def count_lines(file):
 # Functions for splitting posts into smaller chunks if necessary
 
 def split_text(text, max_chars):
-    logger.info(f"Splitting text \"{text}\" into chunks.")
     posts = []
     if len(text) < max_chars:
         return [text]
+    logger.info(f"Splitting text \"{text}\" into chunks.")
     # Split the text into paragraphs
     paragraphs = text.split("\n")
     i = 0
