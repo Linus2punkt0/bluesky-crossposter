@@ -19,7 +19,7 @@ def output(queue):
             else:
                 post(item)
         except tweepy.TooManyRequests:
-            logger.error("Twitter rate limit reached!")
+            logger.error("Twitter ratelimit reached!")
             logger.debug(traceback.format_exc())
             set_ratelimit_reset(arrow.now().shift(days=1).timestamp())
         except tweepy.TweepyException as e:
@@ -75,11 +75,12 @@ def post(item):
         # If a quote post gets split, only the first post quotes, and the second becomes just a reply to that post
         quote_id = None
         reply_id = content["data"]["id"]
-        # Checking remaining rate limit and rate limit reset time
+        # Checking remaining ratelimit and ratelimit reset time
         remaining_ratelimit = int(a.headers["x-app-limit-24hour-remaining"])
+        logger.info(f"{remaining_ratelimit} posts remaining until twitter ratelimit is reached")
         reset_time = int(a.headers["x-app-limit-24hour-reset"])
         if remaining_ratelimit < 1:
-            logger.info("Twitter rate limit has been reached.")
+            logger.info("Twitter ratelimit has been reached.")
             set_ratelimit_reset(reset_time)
     database.update(item["id"], "twitter", reply_id)
 
