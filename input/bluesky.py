@@ -61,7 +61,7 @@ def get_posts():
             text += '\n'+status.post.embed.external.uri
             urls.append(status.post.embed.external.uri)
         if mentioned_users and settings.mentions == "skip":
-            logger.info(f'post {status.id} mentions a user, crossposter has been set to skip posts including mentions.')
+            logger.info(f'post {post_id} mentions a user, crossposter has been set to skip posts including mentions.')
             continue
         # Setting reply_to_user to the same as user handle and only changing it if the post is an actual reply.
         # Later a check is performed to if the variable is the same as the user handle, so only

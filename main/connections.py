@@ -1,4 +1,4 @@
-import tweepy, traceback
+import tweepy, traceback, requests
 from mastodon import Mastodon
 from atproto import Client, Session, SessionEvent
 from main.functions import logger
@@ -50,7 +50,7 @@ def twitter_client_connect():
                         consumer_secret=TWITTER_APP_SECRET,
                         access_token=TWITTER_ACCESS_TOKEN,
                         access_token_secret=TWITTER_ACCESS_TOKEN_SECRET,
-                        wait_on_rate_limit=False)
+                        return_type=requests.Response)
     
     return twitter_client
 
