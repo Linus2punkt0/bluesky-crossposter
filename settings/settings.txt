@@ -1,4 +1,4 @@
-import os
+import os, ast
 
 # Setting input source.
 # Accepted values: bluesky, mastodon
@@ -120,7 +120,7 @@ outputs["bluesky"] = os.environ.get('BLUESKY_CROSSPOSTING').lower() == 'true' if
 mastodon_mentions = os.environ.get('MASTODON_MENTIONS') if os.environ.get('MASTODON_MENTIONS') else mastodon_mentions
 mentions = os.environ.get('MENTIONS') if os.environ.get('MENTIONS') else mentions
 post_default = os.environ.get('POST_DEFAULT').lower() == 'true' if os.environ.get('POST_DEFAULT') else post_default
-lang_toggle = os.environ.get('LANG_TOGGLE') if os.environ.get('LANG_TOGGLE') else lang_toggle
+lang_toggle = ast.literal_eval(os.environ.get('LANG_TOGGLE')) if os.environ.get('LANG_TOGGLE') else lang_toggle
 quote_posts = os.environ.get('QUOTE_POSTS').lower() == 'true' if os.environ.get('QUOTE_POSTS') else quote_posts
 retweets = os.environ.get('RETWEETS').lower() == 'true' if os.environ.get('RETWEETS') else retweets
 max_retries = int(os.environ.get('MAX_RETRIES')) if os.environ.get('MAX_RETRIES') else max_retries
@@ -131,4 +131,4 @@ cross_delete = os.environ.get('CROSS_DELETE').lower() == 'true' if os.environ.ge
 log_level = os.environ.get('LOG_LEVEL') if os.environ.get('LOG_LEVEL') else log_level
 mastodon_visibility = os.environ.get('MASTODON_VISIBILITY') if os.environ.get('MASTODON_VISIBILITY') else mastodon_visibility
 allow_reply = os.environ.get('ALLOW_REPLY') if os.environ.get('ALLOW_REPLY') else allow_reply
-privacy = os.environ.get('PRIVACY') if os.environ.get('PRIVACY') else privacy
+privacy = ast.literal_eval(os.environ.get('PRIVACY')) if os.environ.get('PRIVACY') else privacy
