@@ -66,11 +66,13 @@ def bsky_connect():
         # In order to not be ratelimited, session is cached in a session file.
         bluesky_client.on_session_change(on_session_change)
         session = session_cache_read()
-        if session:
+        # Try excepting will catch both missing and expired session files and will instead attempt
+        # regular login
+        try:
             logger.info("Connecting to Bluesky using saved session.")
             bluesky_client.login(session_string=session)
             logger.info("Successfully logged in to Bluesky using saved session.")
-        else:
+        except:
             logger.info("Creating new Bluesky session using password and username.")
             bluesky_client.login(BSKY_HANDLE, BSKY_PASSWORD)
             logger.info("Successfully logged in to Bluesky.")
