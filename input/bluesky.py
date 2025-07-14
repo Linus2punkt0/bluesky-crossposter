@@ -1,4 +1,4 @@
-import arrow
+import arrow, fnmatch, re
 from main.functions import logger
 from settings.auth import BSKY_HANDLE
 from settings.paths import *
@@ -50,6 +50,7 @@ def get_posts():
         mentioned_users = []
         urls = []
         tags = []
+        media = {}
         if status.post.record.facets:
             # Sometimes bluesky shortens URLs and in that case they need to be restored before crossposting
             # (Also using this function to fetch hashtags)
@@ -58,8 +59,17 @@ def get_posts():
             mentioned_users, text, urls = parse_facets(status.post.record, text, urls)
         # Sometimes posts have included links that are not included in the actual text of the post. This adds adds that back.
         if status.post.embed and hasattr(status.post.embed, "external") and hasattr(status.post.embed.external, "uri") and status.post.embed.external.uri not in text:
-            text += '\n'+status.post.embed.external.uri
-            urls.append(status.post.embed.external.uri)
+            # Checking if the url is from media tenor, then it is to be treated as media instead of as a link.
+            if fnmatch.fnmatch(status.post.embed.external.uri, "*media.tenor.com*.gif*"): 
+                logger.info("Found media from Media Tenor, adding to media items.")
+                media = {
+                "type": "image",
+                "items": [{"url": status.post.embed.external.uri, "alt": re.sub("^Alt: ", "", status.post.embed.external.description, flags=re.I)}]
+                }
+            else:
+                logger.info(f"Restoring url {status.post.embed.external.uri} in post.")
+                text += '\n'+status.post.embed.external.uri
+                urls.append(status.post.embed.external.uri)
         if mentioned_users and settings.mentions == "skip":
             logger.info(f'post {post_id} mentions a user, crossposter has been set to skip posts including mentions.')
             continue
@@ -108,7 +118,6 @@ def get_posts():
         # Fetching images and video if there are any in the post
         image_data = ""
         video_data = {}
-        media = {}
         if status.post.embed and hasattr(status.post.embed, "images"):
             image_data = status.post.embed.images
         elif status.post.embed and hasattr(status.post.embed, "media") and hasattr(status.post.embed.media, "images"):
