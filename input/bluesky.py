@@ -64,7 +64,7 @@ def get_posts():
                 logger.info("Found media from Media Tenor, adding to media items.")
                 media = {
                 "type": "image",
-                "items": [{"url": status.post.embed.external.uri, "alt": re.sub("^Alt: ", "", status.post.embed.external.description)}]
+                "items": [{"url": status.post.embed.external.uri, "alt": re.sub("^Alt: ", "", status.post.embed.external.description, flags=re.I)}]
                 }
             else:
                 logger.info(f"Restoring url {status.post.embed.external.uri} in post.")
