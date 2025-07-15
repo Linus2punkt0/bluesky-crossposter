@@ -1,6 +1,7 @@
 from copy import deepcopy
 from main.functions import logger, split_text
 from settings.paths import image_path
+from PIL import Image
 import random, string, urllib, requests
 import settings.settings as settings
 from main.service_parameters import service_parameters
@@ -54,14 +55,17 @@ class Post():
     def get_images(self):
         for image in self.info["media"]["items"]:
             # Giving the image just a random filename
-            filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10)) + ".jpg"
+            filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
             filename = image_path + filename
             # Downloading fullsize version of image
             urllib.request.urlretrieve(image["url"], filename)
+            # Checking the image type, mostly to see if it is a gif.
+            local_image = Image.open(filename)
             # Saving image info in a dictionary and adding it to the list.
             image_info = {
                 "filename": filename,
-                "alt": image["alt"]
+                "alt": image["alt"],
+                "type": local_image.format
             }
             self.media.append(image_info)
 
@@ -83,7 +87,8 @@ class Post():
             logger.info("Video successfully downloaded to %s." % filename)
             self.media.append({
                 "filename": filename,
-                "alt": video["alt"]
+                "alt": video["alt"],
+                "type": "MP4"
             })
     
     # Adding the url to a quoted post to the text, if the quote post setting is set to True
