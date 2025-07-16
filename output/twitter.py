@@ -55,7 +55,7 @@ def post(item):
                 # Chunking uploads of gifs to avoid size limitations
                 chunked = False
                 media_category = None
-                if media["type"] == "GIF":
+                if media_item["type"] == "GIF":
                     chunked = True
                     media_category = "tweet_gif"
                 alt = media_item["alt"]
