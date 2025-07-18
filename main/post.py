@@ -1,8 +1,10 @@
 from copy import deepcopy
 from main.functions import logger, split_text
 from settings.paths import image_path
+from PIL import Image
 import random, string, urllib, requests
 import settings.settings as settings
+from main.service_parameters import service_parameters
 
 class Post():
         # A post is initiated with a dict containing the following fields
@@ -20,21 +22,6 @@ class Post():
         #     "created_at": None,
         # }
 
-    # Basic information about posts to different services
-    service_parameters = {
-        "twitter": {
-            "post_length": 280,
-            "url_length": 23
-        },
-        "mastodon": {
-            "post_length": 500,
-            "url_length": 23
-        },
-        "bluesky": {
-            "post_length": 300,
-            "url_length": 29
-        },
-    }
 
     def __init__(self, post_info):
         logger.debug(f"Generating post based on {post_info}")
@@ -52,7 +39,7 @@ class Post():
         text = deepcopy(self.info["text"]) + addition
         text = self.shorten_urls(text, service)
         # Turning string into a list of strings short enough to fit the target service
-        posts = split_text(text, self.service_parameters[service]["post_length"])
+        posts = split_text(text, service)
         for i, text in enumerate(posts):
             posts[i] = self.restore_urls(text, service)
         return posts
@@ -68,14 +55,17 @@ class Post():
     def get_images(self):
         for image in self.info["media"]["items"]:
             # Giving the image just a random filename
-            filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10)) + ".jpg"
+            filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
             filename = image_path + filename
             # Downloading fullsize version of image
             urllib.request.urlretrieve(image["url"], filename)
+            # Checking the image type, mostly to see if it is a gif.
+            local_image = Image.open(filename)
             # Saving image info in a dictionary and adding it to the list.
             image_info = {
                 "filename": filename,
-                "alt": image["alt"]
+                "alt": image["alt"],
+                "type": local_image.format
             }
             self.media.append(image_info)
 
@@ -97,7 +87,8 @@ class Post():
             logger.info("Video successfully downloaded to %s." % filename)
             self.media.append({
                 "filename": filename,
-                "alt": video["alt"]
+                "alt": video["alt"],
+                "type": "MP4"
             })
     
     # Adding the url to a quoted post to the text, if the quote post setting is set to True
@@ -125,7 +116,7 @@ class Post():
     
     # Functions for shortening and restoring URLs, used to calculate post length
     def shorten_urls(self, text, service):
-        max_url_length = self.service_parameters[service]["url_length"]
+        max_url_length = service_parameters[service]["url_length"]
         i = 1
         for url in self.info["urls"]:
             # If the length of the URL is longer than the max url length, it is replaced with a shortened version
@@ -137,7 +128,7 @@ class Post():
 
     # When a post contains a shortened url, it is restored to full length
     def restore_urls(self, text, service):
-        max_url_length = self.service_parameters[service]["url_length"]
+        max_url_length = service_parameters[service]["url_length"]
         i = 1
         for url in self.info["urls"]:
             # Restoring URLs to their original form

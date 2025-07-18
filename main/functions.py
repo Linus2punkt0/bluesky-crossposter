@@ -3,7 +3,7 @@ from loguru import logger
 from settings.auth import *
 from settings.paths import *
 from settings import settings
-
+from main.service_parameters import service_parameters
 
 
 # Setting up logging
@@ -63,9 +63,9 @@ def count_lines(file):
 
 # Functions for splitting posts into smaller chunks if necessary
 
-def split_text(text, max_chars):
+def split_text(text, service):
     posts = []
-    if len(text) < max_chars:
+    if check_length(text, service):
         return [text]
     logger.info(f"Splitting text \"{text}\" into chunks.")
     # Split the text into paragraphs
@@ -75,15 +75,15 @@ def split_text(text, max_chars):
         post = paragraphs[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(paragraphs) and len(f'{post}\n{paragraphs[o]}') <= max_chars:
+        while o < len(paragraphs) and check_length(f'{post}\n{paragraphs[o]}', service):
             post += f"\n{paragraphs[o]}"
             o += 1
         # If the newly created post is short enough, it is added to the post array.
-        if len(post) <= max_chars:
+        if check_length(post, service):
             posts.append(post)
         # Otherwise it is split further
         else:
-            posts += split_paragraphs(post, max_chars)
+            posts += split_paragraphs(post, service)
         # o will be the number in the array just after the last one that was just added
         i = o
     # Deleting empty items from post array
@@ -94,7 +94,7 @@ def split_text(text, max_chars):
     return posts
 
 # If a paragraph is too long, it is split into sentances
-def split_paragraphs(text, max_chars):
+def split_paragraphs(text, service):
     posts = []
     # Split the text into sentences
     sentences = re.split(r"(?<=[.!?])\s+", text)
@@ -103,19 +103,19 @@ def split_paragraphs(text, max_chars):
         post = sentences[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(sentences) and len(f'{post} {sentences[o]}') <= max_chars:
+        while o < len(sentences) and check_length(f'{post} {sentences[o]}', service):
             post += f" {sentences[o]}"
             o += 1
-        if len(post) <= max_chars:
+        if check_length(post, service):
             posts.append(post)
         else:
-            posts += split_sentences(post, max_chars)
+            posts += split_sentences(post, service)
         # o will be the number in the array just after the last one that was just added
         i = o
     return posts
 
 # If a sentence is too long, attempting to split it at logical points (commas, colons)
-def split_sentences(text, max_chars):
+def split_sentences(text, service):
     posts = []
     # Split the text into words
     words = re.split(r"(?<=[,:])\s+", text)
@@ -124,19 +124,19 @@ def split_sentences(text, max_chars):
         post = words[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(words) and len(f'{post},{words[o]}') <= max_chars:
+        while o < len(words) and check_length(f'{post},{words[o]}', service):
             post += f" {words[o]}"
             o += 1
-        if len(post) <= max_chars:
+        if check_length(post, service):
             posts.append(post)
         else:
-            posts += split_subsentences(post, max_chars)
+            posts += split_subsentences(post, service)
         # o will be the number in the array just after the last one that was just added
         i = o
     return posts
 
 # If strings are still too long, splitting by word.
-def split_subsentences(text, max_chars):
+def split_subsentences(text, service):
     posts = []
     # Split the text into words
     words = text.split(" ")
@@ -145,19 +145,19 @@ def split_subsentences(text, max_chars):
         post = words[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(words) and len(f'{post} {words[o]}') <= max_chars:
+        while o < len(words) and check_length(f'{post} {words[o]}', service):
             post += f" {words[o]}"
             o += 1
-        if len(post) <= max_chars:
+        if check_length(post, service):
             posts.append(post)
         else:
-            posts += split_words(post, max_chars)
+            posts += split_words(post, service)
         # o will be the number in the array just after the last one that was just added
         i = o
     return posts
 
 # This is the last resort, if some madman posts just a massive string of characters
-def split_words(text, max_chars):
+def split_words(text, service):
     posts = []
     # Split the text into single characters
     characters = list(text)
@@ -166,7 +166,7 @@ def split_words(text, max_chars):
         post = characters[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(characters) and len(f'{post}{characters[o]}') <= max_chars:
+        while o < len(characters) and check_length(f'{post}{characters[o]}', service):
             post += f"{characters[o]}"
             o += 1
         posts.append(post)
@@ -174,4 +174,11 @@ def split_words(text, max_chars):
         i = o
     return posts
 
-
+# Checking length against service, taking into account that some characters are counted double by some services.
+def check_length(string, service):
+    max_length = service_parameters[service]["post_length"]
+    string_length = len(string)
+    for character in service_parameters[service]["spec_chars"]:
+        instances = string.count(character["char"])
+        string_length += instances * character["add"]
+    return(string_length <= max_length)

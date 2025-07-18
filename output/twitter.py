@@ -22,7 +22,7 @@ def output(queue):
             logger.error("Twitter ratelimit reached!")
             logger.debug(traceback.format_exc())
             set_ratelimit_reset(arrow.now().shift(days=1).timestamp())
-        except tweepy.TweepyException as e:
+        except Exception as e:
             database.failed_post(item["id"], "twitter")
             logger.error(f"Failed to post {item['id']}: {e}")
             logger.debug(traceback.format_exc())
@@ -52,12 +52,18 @@ def post(item):
         if media:
             media_ids = []
             for media_item in media:
+                # Chunking uploads of gifs to avoid size limitations
+                chunked = False
+                media_category = None
+                if media_item["type"] == "GIF":
+                    chunked = True
+                    media_category = "tweet_gif"
                 alt = media_item["alt"]
                 # Abiding by alt character limit
                 if len(alt) > 1000:
                     alt = alt[:996] + "..."
-                logger.info(f'Uploading media {media_item["filename"]}')
-                res = twitter_api.media_upload(media_item["filename"])
+                logger.info(f'Uploading media {media_item["filename"]}, chunked={chunked}, media_category={media_category}')
+                res = twitter_api.media_upload(media_item["filename"], chunked=chunked, media_category=media_category)
                 logger.debug(res)
                 id = res.media_id
                 # If alt text was added to the image on bluesky, it's also added to the image on twitter.
