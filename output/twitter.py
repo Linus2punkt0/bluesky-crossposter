@@ -22,7 +22,7 @@ def output(queue):
             logger.error("Twitter ratelimit reached!")
             logger.debug(traceback.format_exc())
             set_ratelimit_reset(arrow.now().shift(days=1).timestamp())
-        except tweepy.TweepyException as e:
+        except Exception as e:
             database.failed_post(item["id"], "twitter")
             logger.error(f"Failed to post {item['id']}: {e}")
             logger.debug(traceback.format_exc())
