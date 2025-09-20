@@ -43,7 +43,7 @@ def post(item):
     if item["type"] == "quote" and item["post"].info["reply_id"]:
         post_url = MASTODON_INSTANCE + "@" + MASTODON_HANDLE + "/" + str(item["post"].info["quote_id"])
         reply_to_post = database.get_id(item["post"].info["reply_id"], "mastodon")
-        text_content = item["post"].text_content(f"\n{post_url}")
+        text_content = item["post"].text_content("mastodon", f"\n{post_url}")
     elif item["type"] == "quote":
         reply_to_post = database.get_id(item["post"].info["quote_id"], "mastodon")
     # Doing a second check to see if post is a reply or quote of a post that has been skipped or failed to br crossposted.
