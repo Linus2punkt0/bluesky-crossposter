@@ -47,7 +47,7 @@ def post(item):
     elif item["type"] == "quote":
         reply_to_post = database.get_id(item["post"].info["quote_id"], "mastodon")
         if not reply_to_post:
-            logger.info(f"Can't post quote since {item['post'].info['reply_id']} has not been crossposted")
+            logger.info(f"Can't post quote since {item['post'].info['quote_id']} has not been crossposted")
             return
     # Doing a second check to see if post is a reply or quote of a post that has been skipped or failed to br crossposted.
     if reply_to_post in ["skipped", "FailedToPost", "duplicate"]:
