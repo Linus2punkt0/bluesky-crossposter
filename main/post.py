@@ -44,6 +44,12 @@ class Post():
             posts[i] = self.restore_urls(text, service)
         return posts
             
+    # If language is set, returning the first language in the array. If no language is set, returning None.
+    def get_main_language(self):
+        if self.info["language"]:
+            return self.info["language"][0]
+        return None
+
     # Getting video and images
     def get_media(self):
         if self.info["media"]["type"] == "image":
