@@ -58,7 +58,7 @@ def post(item):
     # Mastodon only takes one language per post, so the first one in the list is used.
     language = None
     if not settings.lang_toggle["mastodon"]:
-        language = item["post"].info["language"][0]
+        language = item["post"].get_main_language()
     media_ids = []
     # If post includes images, images are uploaded so that they can be included in the toot
     if item["post"].media:
