@@ -1,9 +1,11 @@
-import  os, shutil, re, sys, traceback
+import  os, shutil, re, sys, traceback, requests
 from loguru import logger
 from settings.auth import *
 from settings.paths import *
 from settings import settings
 from main.service_parameters import service_parameters
+
+
 
 
 # Setting up logging
@@ -65,7 +67,11 @@ def count_lines(file):
 
 def split_text(text, service):
     posts = []
-    if check_length(text, service):
+    urls = []
+    # Twitter has some over eager URL handling that needs to be accounted for
+    if service == "twitter":
+        urls = find_mistaken_urls(text, service)
+    if check_length(text, service, urls):
         return [text]
     logger.info(f"Splitting text \"{text}\" into chunks.")
     # Split the text into paragraphs
@@ -75,15 +81,15 @@ def split_text(text, service):
         post = paragraphs[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(paragraphs) and check_length(f'{post}\n{paragraphs[o]}', service):
+        while o < len(paragraphs) and check_length(f'{post}\n{paragraphs[o]}', service, urls):
             post += f"\n{paragraphs[o]}"
             o += 1
         # If the newly created post is short enough, it is added to the post array.
-        if check_length(post, service):
+        if check_length(post, service, urls):
             posts.append(post)
         # Otherwise it is split further
         else:
-            posts += split_paragraphs(post, service)
+            posts += split_paragraphs(post, service, urls)
         # o will be the number in the array just after the last one that was just added
         i = o
     # Deleting empty items from post array
@@ -93,8 +99,9 @@ def split_text(text, service):
     logger.debug(posts)
     return posts
 
+
 # If a paragraph is too long, it is split into sentances
-def split_paragraphs(text, service):
+def split_paragraphs(text, service, urls):
     posts = []
     # Split the text into sentences
     sentences = re.split(r"(?<=[.!?])\s+", text)
@@ -103,19 +110,19 @@ def split_paragraphs(text, service):
         post = sentences[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(sentences) and check_length(f'{post} {sentences[o]}', service):
+        while o < len(sentences) and check_length(f'{post} {sentences[o]}', service, urls):
             post += f" {sentences[o]}"
             o += 1
-        if check_length(post, service):
+        if check_length(post, service, urls):
             posts.append(post)
         else:
-            posts += split_sentences(post, service)
+            posts += split_sentences(post, service, urls)
         # o will be the number in the array just after the last one that was just added
         i = o
     return posts
 
 # If a sentence is too long, attempting to split it at logical points (commas, colons)
-def split_sentences(text, service):
+def split_sentences(text, service, urls):
     posts = []
     # Split the text into words
     words = re.split(r"(?<=[,:])\s+", text)
@@ -124,19 +131,19 @@ def split_sentences(text, service):
         post = words[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(words) and check_length(f'{post},{words[o]}', service):
+        while o < len(words) and check_length(f'{post},{words[o]}', service, urls):
             post += f" {words[o]}"
             o += 1
-        if check_length(post, service):
+        if check_length(post, service, urls):
             posts.append(post)
         else:
-            posts += split_subsentences(post, service)
+            posts += split_subsentences(post, service, urls)
         # o will be the number in the array just after the last one that was just added
         i = o
     return posts
 
 # If strings are still too long, splitting by word.
-def split_subsentences(text, service):
+def split_subsentences(text, service, urls):
     posts = []
     # Split the text into words
     words = text.split(" ")
@@ -145,19 +152,19 @@ def split_subsentences(text, service):
         post = words[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(words) and check_length(f'{post} {words[o]}', service):
+        while o < len(words) and check_length(f'{post} {words[o]}', service, urls):
             post += f" {words[o]}"
             o += 1
-        if check_length(post, service):
+        if check_length(post, service, urls):
             posts.append(post)
         else:
-            posts += split_words(post, service)
+            posts += split_words(post, service, urls)
         # o will be the number in the array just after the last one that was just added
         i = o
     return posts
 
 # This is the last resort, if some madman posts just a massive string of characters
-def split_words(text, service):
+def split_words(text, service, urls):
     posts = []
     # Split the text into single characters
     characters = list(text)
@@ -166,7 +173,7 @@ def split_words(text, service):
         post = characters[i]
         o = i + 1
         # Adding together sections until character limit is reached, trying to fit as much as possible into one post
-        while o < len(characters) and check_length(f'{post}{characters[o]}', service):
+        while o < len(characters) and check_length(f'{post}{characters[o]}', service, urls):
             post += f"{characters[o]}"
             o += 1
         posts.append(post)
@@ -174,11 +181,45 @@ def split_words(text, service):
         i = o
     return posts
 
-# Checking length against service, taking into account that some characters are counted double by some services.
-def check_length(string, service):
+# Checking length against service, taking into account that some characters are counted double by some services 
+# and that Twitter has some over eager URL handling
+def check_length(string, service, urls):
     max_length = service_parameters[service]["post_length"]
     string_length = len(string)
+    for url in urls:
+        if url["url"] in string.lower():
+            string_length += url["delta"]
     for character in service_parameters[service]["spec_chars"]:
         instances = string.count(character["char"])
         string_length += instances * character["add"]
     return(string_length <= max_length)
+
+# Function for getting a list of valid TLDs from IANA
+def get_tlds():
+    if not hasattr(get_tlds, "_data"):
+        logger.info("Getting list of TLDs from IANA.")
+        resp = requests.get("https://data.iana.org/TLD/tlds-alpha-by-domain.txt")
+        get_tlds._data = resp.content.decode('utf-8').lower().split("\n")[1:-1]
+    return get_tlds._data
+        
+# Twitter will match any combination of characters with a period followed by a valid TLD as a URL and recalculate 
+# the length of the post based on that. This function will check for any such "URLs" and adjust accordingly
+def find_mistaken_urls(text, service):
+    tlds = get_tlds()
+    matches = []
+    # Finding any "URLs"
+    for tld in tlds:
+        match = re.findall(r" [a-z0-9]*\." + tld + r" ", f" {text.lower()} ")
+        if match:
+            matches += match
+    # Calculating delta between actual "URL" length, and standard Twitter URL length
+    urls = []
+    for match in matches:
+        delta = service_parameters[service]["url_length"] - len(match.strip())
+        if delta != 0:
+            modifier = {
+                "url": match.strip(),
+                "delta": delta
+            }
+            urls.append(modifier)
+    return urls
