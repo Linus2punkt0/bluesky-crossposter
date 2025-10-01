@@ -71,6 +71,7 @@ def split_text(text, service):
     # Twitter has some over eager URL handling that needs to be accounted for
     potential_urls = re.findall(r" [a-z0-9]*\.[a-z0-9]{2,30} ", f" {text.lower()} ")
     if service == "twitter" and potential_urls:
+        logger.info(f"Found following strings that Twitter might interpret as URLS: {" ".join(potential_urls).replace("  ", ", ")}")
         urls = find_mistaken_urls(potential_urls, service)
     if check_length(text, service, urls):
         return [text]
@@ -207,18 +208,18 @@ def get_tlds():
 # the length of the post based on that. This function will check for any such "URLs" and adjust accordingly
 def find_mistaken_urls(potential_urls, service):
     tlds = get_tlds()
-    matches = []
     # Finding any "URLs"
     urls = []
     for url in potential_urls:
+        logger.debug(f"Checking if {url} is a valid url.")
         tld = url.strip().split()[1]
         if tld not in tlds:
             continue
         # Calculating delta between actual "URL" length, and standard Twitter URL length
-        delta = service_parameters[service]["url_length"] - len(match.strip())
+        delta = service_parameters[service]["url_length"] - len(url.strip())
         if delta != 0:
             modifier = {
-                "url": match.strip(),
+                "url": url.strip(),
                 "delta": delta
             }
             urls.append(modifier)
