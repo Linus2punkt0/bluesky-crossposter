@@ -211,8 +211,8 @@ def find_mistaken_urls(potential_urls, service):
     # Finding any "URLs"
     urls = []
     for url in potential_urls:
-        logger.debug(f"Checking if {url} is a valid url.")
-        tld = url.strip().split()[1]
+        logger.debug(f"Checking if{url}is a valid url.")
+        tld = url.strip().split(".")[1]
         if tld not in tlds:
             continue
         # Calculating delta between actual "URL" length, and standard Twitter URL length
