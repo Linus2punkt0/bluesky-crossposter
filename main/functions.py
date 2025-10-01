@@ -69,13 +69,14 @@ def split_text(text, service):
     posts = []
     urls = []
     # Twitter has some over eager URL handling that needs to be accounted for
-    potential_urls = re.findall(r" [a-z0-9]*\.[a-z0-9]{2,30} ", f" {text.lower()} ")
+    potential_urls = re.findall(r" [a-z0-9.]*\.[a-z0-9]{2,30}[.,!?]{0,3} ", f" {text.lower()} ")
     if service == "twitter" and potential_urls:
         logger.info(f"Found following strings that Twitter might interpret as URLS: {" ".join(potential_urls).replace("  ", ", ")}")
         urls = find_mistaken_urls(potential_urls, service)
     if check_length(text, service, urls):
         return [text]
     logger.info(f"Splitting text \"{text}\" into chunks.")
+    logger.info("Attempting to split by paragraph.")
     # Split the text into paragraphs
     paragraphs = text.split("\n")
     i = 0
@@ -104,6 +105,7 @@ def split_text(text, service):
 
 # If a paragraph is too long, it is split into sentances
 def split_paragraphs(text, service, urls):
+    logger.info("Attempting to split by sentence.")
     posts = []
     # Split the text into sentences
     sentences = re.split(r"(?<=[.!?])\s+", text)
@@ -125,6 +127,7 @@ def split_paragraphs(text, service, urls):
 
 # If a sentence is too long, attempting to split it at logical points (commas, colons)
 def split_sentences(text, service, urls):
+    logger.info("Attempting to split by other delimiter (commas etc).")
     posts = []
     # Split the text into words
     words = re.split(r"(?<=[,:])\s+", text)
@@ -146,6 +149,7 @@ def split_sentences(text, service, urls):
 
 # If strings are still too long, splitting by word.
 def split_subsentences(text, service, urls):
+    logger.info("Attempting to split by word.")
     posts = []
     # Split the text into words
     words = text.split(" ")
@@ -167,6 +171,7 @@ def split_subsentences(text, service, urls):
 
 # This is the last resort, if some madman posts just a massive string of characters
 def split_words(text, service, urls):
+    logger.info("Attempting to split by character (what the hell are you trying to post?).")
     posts = []
     # Split the text into single characters
     characters = list(text)
@@ -190,10 +195,12 @@ def check_length(string, service, urls):
     string_length = len(string)
     for url in urls:
         if url["url"] in string.lower():
+            logger.debug(f"Accounting for delta of {url["delta"]} caused by {url["url"]}")
             string_length += url["delta"]
     for character in service_parameters[service]["spec_chars"]:
         instances = string.count(character["char"])
         string_length += instances * character["add"]
+    logger.debug(f"\"{string}\" will be viewed as {string_length} characters by {service}.")
     return(string_length <= max_length)
 
 # Function for getting a list of valid TLDs from IANA
@@ -211,8 +218,9 @@ def find_mistaken_urls(potential_urls, service):
     # Finding any "URLs"
     urls = []
     for url in potential_urls:
-        logger.info(f"Checking if{url}is a valid url.")
-        tld = url.strip().split(".")[1]
+        url = re.sub(r'[^a-zA-Z0-9]+$', '', url).strip()
+        logger.info(f"Checking if {url} is a valid url.")
+        tld = url.split(".")[-1]
         if tld not in tlds:
             logger.info(f"{tld} is not a valid TLD, skipping.")
             continue
