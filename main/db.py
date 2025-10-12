@@ -47,7 +47,7 @@ class Database():
         file.close()
         # If the database doesn't contain the origin field, this means it is
         # still in the old format and needs to be converted.
-        if "origin" not in db_data[0]:
+        if db_data and "origin" not in db_data[0]:
             logger.info("Updating database.")
             self.convert_db(db_data)
             return
