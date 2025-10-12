@@ -73,6 +73,9 @@ def post(item):
                     logger.debug(res)
                 media_ids.append(id)
             media = []
+        # API won't handle leading spaces. Tricking it by addigng a "Zero Width Non-Joiner".
+        if text_post.startswith(" "):
+            text_post = text_post.replace(" ", "\u200C ", 1)
         logger.debug(f"text={text_post}, reply_settings={reply_settings}, quote_tweet_id={quote_id}, in_reply_to_tweet_id={reply_id}, media_ids={media_ids}")
         a = twitter_client.create_tweet(text=text_post, reply_settings=reply_settings, quote_tweet_id=quote_id, in_reply_to_tweet_id=reply_id, media_ids=media_ids)
         logger.debug(a.headers)
