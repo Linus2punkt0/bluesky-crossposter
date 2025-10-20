@@ -205,10 +205,11 @@ def check_length(string, service, urls):
 
 # Function for getting a list of valid TLDs from IANA
 def get_tlds():
-    if not hasattr(get_tlds, "_data"):
-        logger.info("Getting list of TLDs from IANA.")
-        resp = requests.get("https://data.iana.org/TLD/tlds-alpha-by-domain.txt")
-        get_tlds._data = resp.content.decode('utf-8').lower().split("\n")[1:-1]
+    if hasattr(get_tlds, "_data"):
+        return get_tlds._data
+    logger.info("Getting list of TLDs from IANA.")
+    resp = requests.get("https://data.iana.org/TLD/tlds-alpha-by-domain.txt")
+    get_tlds._data = resp.content.decode('utf-8').lower().split("\n")[1:-1]
     return get_tlds._data
         
 # Twitter will match any combination of characters with a period followed by a valid TLD as a URL and recalculate 
