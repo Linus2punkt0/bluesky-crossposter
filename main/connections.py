@@ -7,78 +7,67 @@ from settings.paths import session_cache_path, rate_limit_path
 from settings import settings
 import arrow, os
 
-# Storing connections globally to avoid having to make multiple connections
-bluesky_client = None
-mastodon_client = None
-twitter_api = None
-twitter_client = None
-
 # Connection to Mastodon API
 def mastodon_connect():
-    global mastodon_client
-    if mastodon_client:
+    if hasattr(mastodon_connect, "_connection"):
         logger.info("Already connected to Mastodon API.")
-        return mastodon_client
+        return mastodon_connect._connection
     logger.info("Connecting to Mastodon API.")
-    mastodon_client = Mastodon(
+    mastodon_connect._connection = Mastodon(
         access_token = MASTODON_TOKEN,
         api_base_url = MASTODON_INSTANCE
     ) 
-    return mastodon_client
+    return mastodon_connect._connection
 
 # Twitter has two different API methods, and both are needed.
 
 # Connection to Twitter API
 def twitter_api_connect():
-    global twitter_api
-    if twitter_api:
+    if hasattr(twitter_api_connect, "_connection"):
         logger.info("Already connected to Twitter API.")
-        return twitter_api
+        return twitter_api_connect._connection
     logger.info("Connecting to Twitter API.")
     tweepy_auth = tweepy.OAuth1UserHandler(TWITTER_APP_KEY, TWITTER_APP_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET)
-    twitter_api = tweepy.API(tweepy_auth)
-    return twitter_api
+    twitter_api_connect._connection = tweepy.API(tweepy_auth)
+    return twitter_api_connect._connection
 
 # Connection to Twitter client 
 def twitter_client_connect():
-    global twitter_client
-    if twitter_client:
+    if hasattr(twitter_client_connect, "_connection"):
         logger.info("Already connected to Twitter Client.")
-        return twitter_client
+        return twitter_client_connect._connection
     logger.info("Connecting to Twitter Client.")
-    twitter_client = tweepy.Client(consumer_key=TWITTER_APP_KEY,
+    twitter_client_connect._connection = tweepy.Client(consumer_key=TWITTER_APP_KEY,
                         consumer_secret=TWITTER_APP_SECRET,
                         access_token=TWITTER_ACCESS_TOKEN,
                         access_token_secret=TWITTER_ACCESS_TOKEN_SECRET,
                         return_type=requests.Response)
-    
-    return twitter_client
+    return twitter_client_connect._connection
 
 # Connecting to Bluesky ATProto
 def bsky_connect():
-    global bluesky_client
-    if bluesky_client:
+    if hasattr(bsky_connect, "_connection"):
         logger.info("Already connected to Bluesky.")
-        return bluesky_client
+        return bsky_connect._connection
     try:
         logger.info(f'Connecting to Bluesky: {BSKY_PDS}.')
-        bluesky_client = RateLimitedClient(BSKY_PDS)
+        bsky_connect._connection = RateLimitedClient(BSKY_PDS)
         # In order to not be ratelimited, session is cached in a session file.
-        bluesky_client.on_session_change(on_session_change)
+        bsky_connect._connection.on_session_change(on_session_change)
         session = session_cache_read()
         # Try excepting will catch both missing and expired session files and will instead attempt
         # regular login
         try:
             logger.info("Connecting to Bluesky using saved session.")
-            bluesky_client.login(session_string=session)
+            bluesky_clbsky_connect._connectionient.login(session_string=session)
             logger.info("Successfully logged in to Bluesky using saved session.")
         except:
             logger.info("Creating new Bluesky session using password and username.")
-            bluesky_client.login(BSKY_HANDLE, BSKY_PASSWORD)
+            bsky_connect._connection.login(BSKY_HANDLE, BSKY_PASSWORD)
             logger.info("Successfully logged in to Bluesky.")
-        session = bluesky_client.export_session_string()
+        session = bsky_connect._connection.export_session_string()
         session_cache_write(session)
-        return bluesky_client
+        return bsky_connect._connection
     except Exception as e:
         logger.error(e)
         if e.response.content.error == "RateLimitExceeded":
