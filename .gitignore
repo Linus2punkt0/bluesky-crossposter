@@ -5,6 +5,8 @@ logs/*.log*
 backups/*.bak*
 .env
 *.jpg
+*.gif
+*.png
 *.cache
 settings/*.py
 auth.py
