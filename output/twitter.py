@@ -59,7 +59,7 @@ def post(item):
                 if media_item["type"] == "GIF":
                     chunked = True
                     media_category = "tweet_gif"
-                    filename = limit_gif_size(media_item["filename"], 15728640)
+                    filename = limit_gif_size(filename, 15728640)
                 alt = media_item["alt"]
                 # Abiding by alt character limit
                 if len(alt) > 1000:

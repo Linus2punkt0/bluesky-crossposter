@@ -1,5 +1,5 @@
 import traceback
-from main.functions import logger
+from main.functions import logger, limit_gif_size
 from main.connections import mastodon_connect
 from settings.auth import MASTODON_HANDLE, MASTODON_INSTANCE
 from settings import settings
@@ -69,8 +69,11 @@ def post(item):
             # Abiding by alt character limit
             if len(alt) > 1500:
                 alt = alt[:1496] + "..."
-            logger.info(f"Uploading media {media_item['filename']} with alt: {alt} to mastodon")
-            res = mastodon_client.media_post(media_item["filename"], description=media_item["alt"], synchronous=True)
+            filename = media_item['filename']
+            if media_item["type"] == "GIF":
+                filename = limit_gif_size(filename, 16000000)
+            logger.info(f"Uploading media {filename} with alt: {alt} to mastodon")
+            res = mastodon_client.media_post(filename, description=media_item["alt"], synchronous=True)
             media_ids.append(res.id)
     for text_post in text_content:
         logger.info(f"Posting \"{text_post}\" to Mastodon")

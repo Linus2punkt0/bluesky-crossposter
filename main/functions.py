@@ -252,13 +252,16 @@ def limit_gif_size(input_file, target_filesize):
     try:
         file = input_file
         output_file = f'{".".join(file.split(".")[:-1])}_small.{file.split(".")[-1]}'
+        # If a small version of the file already exists, we might not need to redo the shrinking
+        if os.path.isfile(output_file):
+            file = output_file
         shrink_factor = target_filesize / os.path.getsize(input_file)
         while True:
             image_size = os.path.getsize(file)
             if image_size < target_filesize:
                 return file
             logger.info(f"image file size ({image_size}) is larger than target ({target_filesize}).")
-            # Just shrinking the gif dimensions is not enough to make the gif smaller.
+            # Just shrinking the gif dimensions is not enough to make the gif small enough.
             shrink_factor -= 0.1
             logger.info(f"Attempting to shrink image by {shrink_factor}")
             image = Image.open(input_file)
