@@ -1,5 +1,6 @@
-import  os, shutil, re, sys, traceback, requests
+import  os, shutil, re, sys, traceback, requests, math
 from loguru import logger
+from PIL import Image, ImageSequence
 from settings.auth import *
 from settings.paths import *
 from settings import settings
@@ -235,3 +236,40 @@ def find_mistaken_urls(potential_urls, service):
             urls.append(modifier)
     logger.debug(f"Found urls {urls}")
     return urls
+
+
+# Wrap on-the-fly thumbnail generator
+def thumbnails(frames, size):
+    for frame in frames:
+        thumbnail = frame.copy()
+        thumbnail.thumbnail(size, Image.LANCZOS)
+        yield thumbnail
+
+
+
+def limit_gif_size(input_file, target_filesize):
+    logger.info("Attempting to reduce size of posted gif")
+    try:
+        file = input_file
+        output_file = f'{".".join(file.split(".")[:-1])}_small.{file.split(".")[-1]}'
+        shrink_factor = target_filesize / os.path.getsize(input_file)
+        while True:
+            image_size = os.path.getsize(file)
+            if image_size < target_filesize:
+                return file
+            logger.info(f"image file size ({image_size}) is larger than target ({target_filesize}).")
+            # Just shrinking the gif dimensions is not enough to make the gif smaller.
+            shrink_factor -= 0.1
+            logger.info(f"Attempting to shrink image by {shrink_factor}")
+            image = Image.open(input_file)
+            output_size = math.floor(image.size[0] * shrink_factor), math.floor(image.size[1] * shrink_factor)
+            frames = ImageSequence.Iterator(image)
+            frames = thumbnails(frames, output_size)
+            output = next(frames)
+            output.info = image.info 
+            file = output_file
+            output.save(file, save_all=True, append_images=list(frames), loop=0)
+    except Exception as e:
+        logger.error(f"Failed to shrink gif: {e}")
+        logger.debug(traceback.format_exc())
+        return input_file
