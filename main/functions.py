@@ -248,7 +248,7 @@ def thumbnails(frames, size):
 
 
 def limit_gif_size(input_file, target_filesize):
-    logger.info("Attempting to reduce size of posted gif")
+    logger.info("Making sure gif is not too large.")
     try:
         file = input_file
         output_file = f'{".".join(file.split(".")[:-1])}_small.{file.split(".")[-1]}'
