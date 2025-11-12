@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import  traceback, re, ffmpeg, httpx, base64, io, sys
+import  traceback, re, ffmpeg, httpx, base64, io, sys, magic
 from PIL import Image 
 from operator import itemgetter
 from atproto import  models, client_utils, AtUri, IdResolver
@@ -247,6 +247,10 @@ def create_embed(url, media, media_type):
         elif preview.image:
             logger.warning("Preview image in unknown format, skipping.")
             logger.debug(preview.image)
+        mime = magic.from_buffer(io.BytesIO(img_data).read(2048), mime=True)
+        if not mime.startswith("image"):
+            logger.info(f"Preview image data not an image type: {mime}")
+            img_data = None
         if img_data and sys.getsizeof(img_data) > 976560:
             logger.warning(f"Preview image too large to post ({sys.getsizeof(img_data)} is larger than max size 976560)")
             img_data = limit_img_size(img_data, 976560)
