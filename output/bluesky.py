@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import  traceback, re, ffmpeg, httpx, base64, io, sys, magic
+import  traceback, re, ffmpeg, httpx, base64, io, sys, magic, html
 from PIL import Image 
 from operator import itemgetter
 from atproto import  models, client_utils, AtUri, IdResolver
@@ -260,10 +260,10 @@ def create_embed(url, media, media_type):
             image = bluesky_client.upload_blob(img_data).blob
         title = ""
         if preview.title:
-            title = preview.title
+            title = html.unescape(preview.title)
         description = ""
         if preview.description:
-            description = preview.description
+            description = html.unescape(preview.description)
         # If no info is found for the preview, skipping creating one
         if not title and not description and not image:
             return None
