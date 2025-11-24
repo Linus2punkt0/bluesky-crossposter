@@ -1,9 +1,14 @@
 __pycache__
 database.json
-database.bak
+database.bak*
 logs/*.log*
 backups/*.bak*
 .env
 *.jpg
+*.gif
+*.png
 *.cache
 settings/*.py
+auth.py
+.venv
+test.py

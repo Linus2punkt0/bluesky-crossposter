@@ -1,5 +1,5 @@
 import traceback, arrow, json, tweepy
-from main.functions import logger
+from main.functions import logger, limit_gif_size
 from main.connections import twitter_api_connect, twitter_client_connect
 from settings.auth import *
 from settings import settings
@@ -52,18 +52,20 @@ def post(item):
         if media:
             media_ids = []
             for media_item in media:
-                # Chunking uploads of gifs to avoid size limitations
+                # Shrinking and chunking uploads of gifs to avoid size limitations
                 chunked = False
                 media_category = None
+                filename = media_item["filename"]
                 if media_item["type"] == "GIF":
                     chunked = True
                     media_category = "tweet_gif"
+                    filename = limit_gif_size(filename, 15728640)
                 alt = media_item["alt"]
                 # Abiding by alt character limit
                 if len(alt) > 1000:
                     alt = alt[:996] + "..."
-                logger.info(f'Uploading media {media_item["filename"]}, chunked={chunked}, media_category={media_category}')
-                res = twitter_api.media_upload(media_item["filename"], chunked=chunked, media_category=media_category)
+                logger.info(f'Uploading media {filename}, chunked={chunked}, media_category={media_category}')
+                res = twitter_api.media_upload(filename, chunked=chunked, media_category=media_category)
                 logger.debug(res)
                 id = res.media_id
                 # If alt text was added to the image on bluesky, it's also added to the image on twitter.

@@ -62,7 +62,8 @@ class Post():
         for image in self.info["media"]["items"]:
             # Giving the image just a random filename
             filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
-            filename = image_path + filename
+            file_ending = image["url"].split("?")[0].split(".")[-1]
+            filename = f"{image_path}{filename}.{file_ending}" 
             # Downloading fullsize version of image
             urllib.request.urlretrieve(image["url"], filename)
             # Checking the image type, mostly to see if it is a gif.
