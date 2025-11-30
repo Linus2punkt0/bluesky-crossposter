@@ -17,6 +17,7 @@ def get_posts():
     # Getting feed of user
     profile_feed = bsky.app.bsky.feed.get_author_feed({'actor': BSKY_HANDLE})
     for status in profile_feed.feed:
+        logger.trace(status)
         post_id = status.post.cid
         uri = status.post.uri
         # If the post was not written by the account that posted it, it is a repost from another account and is skipped.

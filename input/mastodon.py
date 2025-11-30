@@ -13,6 +13,7 @@ def get_posts():
     user_id = mastodon.me()["id"]
     statuses = mastodon.account_statuses(user_id)
     for status in statuses:
+        logger.trace(status)
         post_id = str(status.id)
         # If post is a reply and the reply is to another account, it will not be crossposted. Same if it is a repost of a post from another account.
         if (status.in_reply_to_account_id and status.in_reply_to_account_id != user_id) or (status.reblog and status.reblog.account.id != user_id):
