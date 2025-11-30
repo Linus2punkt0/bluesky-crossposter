@@ -66,13 +66,13 @@ def post(item):
                     alt = alt[:996] + "..."
                 logger.info(f'Uploading media {filename}, chunked={chunked}, media_category={media_category}')
                 res = twitter_api.media_upload(filename, chunked=chunked, media_category=media_category)
-                logger.debug(res)
+                logger.trace(res)
                 id = res.media_id
                 # If alt text was added to the image on bluesky, it's also added to the image on twitter.
                 if alt:
                     logger.info(f"Adding alt-text: {alt}")
                     res = twitter_api.create_media_metadata(id, alt)
-                    logger.debug(res)
+                    logger.trace(res)
                 media_ids.append(id)
             media = []
         # API won't handle leading spaces. Tricking it by addigng a "Zero Width Non-Joiner".
@@ -80,8 +80,8 @@ def post(item):
             text_post = text_post.replace(" ", "\u200C ", 1)
         logger.debug(f"text={text_post}, reply_settings={reply_settings}, quote_tweet_id={quote_id}, in_reply_to_tweet_id={reply_id}, media_ids={media_ids}")
         a = twitter_client.create_tweet(text=text_post, reply_settings=reply_settings, quote_tweet_id=quote_id, in_reply_to_tweet_id=reply_id, media_ids=media_ids)
-        logger.debug(a.headers)
-        logger.debug(a.content)
+        logger.trace(a.headers)
+        logger.trace(a.content)
         content = json.loads(a.content)
         # If a quote post gets split, only the first post quotes, and the second becomes just a reply to that post
         quote_id = None
@@ -101,7 +101,7 @@ def repost(id):
     twitter_client = twitter_client_connect()
     a = twitter_client.retweet(id)
     logger.info(f"retweeted tweet {id}")
-    logger.debug(a)
+    logger.trace(a)
 
 # Function for deleting tweets. Takes ID of post from origin (Mastodon or Bluesky)
 def delete_post(origin_id):
@@ -110,7 +110,7 @@ def delete_post(origin_id):
     logger.info(f"Deleting tweet with id {post_id}")
     try:
         a = twitter_api.destroy_status(post_id)
-        logger.debug(a)
+        logger.trace(a)
     except Exception as e:
         logger.debug(e)
         if "No status found with that ID" in str(e):
