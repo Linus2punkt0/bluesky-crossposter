@@ -199,8 +199,9 @@ def get_privacy(threadgate):
 def get_sensitive(record):
     if not hasattr(record, "labels") or not record.labels:
         return False
+    logger.info(f"Found labels on post: {record.labels.values}")
     for label in record.labels.values:
-        if label in ["graphic-media", "sexual", "porn", "nudity"]:
+        if label.val in ["graphic-media", "sexual", "porn", "nudity"]:
             return True
     return False
 
