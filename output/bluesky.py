@@ -87,14 +87,13 @@ def post(item):
                     images.append(f.read())
                 image_alts.append(media_item["alt"])
                 aspect_ratios.append(get_aspect_ratio(media_item["filename"], "image"))
-            logger.debug(f"bluesky_client.send_images({bluesky_post}, images={images}, image_alts={image_alts}, image_aspect_ratios={aspect_ratios},reply_to={reply_to})")
+            logger.debug(f"bluesky_client.send_images({bluesky_post}, images={media}, image_alts={image_alts}, image_aspect_ratios={aspect_ratios},reply_to={reply_to})")
             reply_ref = models.create_strong_ref(
                             bluesky_client.send_images(
                                 bluesky_post,
                                 images=images,
                                 image_alts=image_alts,
                                 image_aspect_ratios=aspect_ratios,
-                                labels=labels,
                                 reply_to=reply_to
                             )
                         )
@@ -114,8 +113,7 @@ def post(item):
                             bluesky_post,
                             video=video,
                             video_alt=video_data["alt"],
-                            video_aspect_ratio=aspect_ratio,
-                            labels=labels
+                            video_aspect_ratio=aspect_ratio
                         )
                     )
             # Emptying media array after posting
@@ -127,8 +125,7 @@ def post(item):
                 bluesky_client.send_post(
                     bluesky_post,
                     reply_to=reply_to,
-                    embed=embed,
-                    labels=labels
+                    embed=embed
                 )
             )
         # No root_ref it means the post is the start of the thread, i.e. the root.
