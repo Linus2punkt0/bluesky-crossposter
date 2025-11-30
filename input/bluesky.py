@@ -116,6 +116,11 @@ def get_posts():
                 text = text.replace(quote_url, "")
         # Checking who is allowed to reply to the post
         privacy_setting = get_privacy(status.post.threadgate)
+        # Getting content warning labels from post
+        labels = []
+        if hasattr(status.post.record, "labels") and status.post.record.labels:
+            for label in status.post.record.labels.values:
+                labels.append(label.val)
         # Fetching images and video if there are any in the post
         image_data = ""
         video_data = {}
@@ -148,10 +153,11 @@ def get_posts():
             "quote_id": quoted_id,
             "quote_url": quote_url,
             "media": media,
+            "labels": labels,
             "language": status.post.record.langs,
             "privacy": privacy_setting,
             "repost": repost,
-            "created_at": created_at
+            "created_at": created_at,
         }
         logger.debug(post_info)
         posts.append(post_info)
