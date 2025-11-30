@@ -144,7 +144,7 @@ def repost(item):
     response = bluesky_client.repost(uri=post_uri, cid=post_id)
     database.update(item["id"], "bluesky")
     logger.info(f"reposted post {post_id}")
-    logger.debug(response)
+    logger.trace(response)
 
 # Function for deleting post. Takes ID of post from origin (Mastodon)
 def delete_post(origin_id):
@@ -168,7 +168,7 @@ def build_post(text, urls, hashtags):
     for url in urls:
         logger.info(f"Checking if url \"{url}\" in text \"{text}\"")
         match = re.search(re.escape(url), text.replace("\n", " "))
-        logger.debug(match)
+        logger.trace(match)
         if match:
             logger.info(f"{url} found in text!")
             included.append({"position": match.start(), "string": url, "type": "url"})
