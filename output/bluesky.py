@@ -44,6 +44,10 @@ def post(item):
     reply = False
     if item["type"] == "reply":
         reply = True
+    # Bluesky has multiple options for sensitive media, but Mastodon only has the one, so "graphic-media" is used as a catchall.
+    labels = []
+    if item["sensitive"]:
+        labels.append("graphic-media")
     for text_post in text_content:
         logger.info(f"Posting \"{text_post}\" to Bluesky")
         # If post contains a single URL, attempting to create a link preview (or repost, if link is to a Bluesky post)
@@ -90,6 +94,7 @@ def post(item):
                                 images=images,
                                 image_alts=image_alts,
                                 image_aspect_ratios=aspect_ratios,
+                                labels=labels,
                                 reply_to=reply_to
                             )
                         )
@@ -109,7 +114,8 @@ def post(item):
                             bluesky_post,
                             video=video,
                             video_alt=video_data["alt"],
-                            video_aspect_ratio=aspect_ratio
+                            video_aspect_ratio=aspect_ratio,
+                            labels=labels
                         )
                     )
             # Emptying media array after posting
@@ -121,7 +127,8 @@ def post(item):
                 bluesky_client.send_post(
                     bluesky_post,
                     reply_to=reply_to,
-                    embed=embed
+                    embed=embed,
+                    labels=labels
                 )
             )
         # No root_ref it means the post is the start of the thread, i.e. the root.

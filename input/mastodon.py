@@ -72,6 +72,7 @@ def get_posts():
             "quote_id": None,
             "quote_url": None,
             "media": media,
+            "sensitive": status.sensitive,
             "privacy": get_privacy(status.visibility),
             "language": [status.language],
             "repost": (status.reblog),

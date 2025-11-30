@@ -81,7 +81,7 @@ def post(item):
         if text_post.startswith(" "):
             text_post = text_post.replace(" ", "\u00A0", 1)
         logger.debug(f"mastodon_client.status_post({text_post}, in_reply_to_id={reply_to_post}, media_ids={media_ids}, visibility={visibility}, language={language})")
-        a = mastodon_client.status_post(text_post, in_reply_to_id=reply_to_post, media_ids=media_ids, visibility=visibility, language=language)
+        a = mastodon_client.status_post(text_post, in_reply_to_id=reply_to_post, media_ids=media_ids, visibility=visibility, language=language, sensitive=item["sensitivity"])
         logger.debug(a)
         reply_to_post = a["id"]
         # setting media ids to empty to not end up posting the media in every post in the thread
