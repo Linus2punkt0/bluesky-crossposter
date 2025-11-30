@@ -65,9 +65,9 @@ class Post():
             # Attempting to get the correct file ending from the image url. 
             # This is not strictly necessary so if it fails the image is downloaded with no file ending.
             file_ending = f".{image["url"].split("?")[0].split(".")[-1]}"
-            if len(file_ending) > 4:
+            if len(file_ending) > 5:
                 file_ending = f".{file_ending.split("@")[-1]}"
-            if len(file_ending) > 4:
+            if len(file_ending) > 5:
                 file_ending = ""
             filename = f"{image_path}{filename}{file_ending}" 
             logger.info(f"Downloading image from {image["url"]} as {filename}")
