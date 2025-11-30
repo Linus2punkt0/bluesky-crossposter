@@ -46,7 +46,7 @@ def post(item):
         reply = True
     # Bluesky has multiple options for sensitive media, but Mastodon only has the one, so "graphic-media" is used as a catchall.
     labels = []
-    if item["sensitive"]:
+    if item["post"].info["sensitive"]:
         labels.append("graphic-media")
     for text_post in text_content:
         logger.info(f"Posting \"{text_post}\" to Bluesky")
