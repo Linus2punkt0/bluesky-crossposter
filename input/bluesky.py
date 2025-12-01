@@ -154,7 +154,7 @@ def get_posts():
             "language": status.post.record.langs,
             "privacy": privacy_setting,
             "repost": repost,
-            "created_at": created_at,
+            "created_at": created_at
         }
         logger.debug(post_info)
         posts.append(post_info)
