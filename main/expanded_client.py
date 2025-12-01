@@ -41,9 +41,7 @@ class ExpandedClient(Client):
                 'models.AppBskyEmbedVideo.Main',
             ]
         ] = None,
-        labels: t.Optional[
-        te.Annotated[t.Union['models.ComAtprotoLabelDefs.SelfLabels'], Field(discriminator='py_type')]
-        ] = None,
+        labels: t.Optional[t.List[str]] = None,
         langs: t.Optional[t.List[str]] = None,
         facets: t.Optional[t.List['models.AppBskyRichtextFacet.Main']] = None,
     ) -> 'models.AppBskyFeedPost.CreateRecordResponse':
@@ -79,6 +77,14 @@ class ExpandedClient(Client):
 
         if not repo:
             raise LoginRequiredError
+        
+        current_labels = []
+        for label in labels:
+            current_labels.append(models.ComAtprotoLabelDefs.SelfLabel(val=label))
+
+        labels = models.ComAtprotoLabelDefs.SelfLabels(
+            values=current_labels
+        )
 
         if not langs:
             langs = [DEFAULT_LANGUAGE_CODE1]
@@ -88,6 +94,7 @@ class ExpandedClient(Client):
             text=text,
             reply=reply_to,
             embed=embed,
+            labels=labels,
             langs=langs,
             facets=facets,
         )
@@ -100,9 +107,7 @@ class ExpandedClient(Client):
         image_alts: t.Optional[t.List[str]] = None,
         profile_identify: t.Optional[str] = None,
         reply_to: t.Optional['models.AppBskyFeedPost.ReplyRef'] = None,
-        labels: t.Optional[
-        te.Annotated[t.Union['models.ComAtprotoLabelDefs.SelfLabels'], Field(discriminator='py_type')]
-        ] = None,
+        labels: t.Optional[t.List[str]] = None,
         langs: t.Optional[t.List[str]] = None,
         facets: t.Optional[t.List['models.AppBskyRichtextFacet.Main']] = None,
         image_aspect_ratios: t.Optional[t.List['models.AppBskyEmbedDefs.AspectRatio']] = None,
@@ -155,6 +160,7 @@ class ExpandedClient(Client):
             profile_identify=profile_identify,
             reply_to=reply_to,
             embed=models.AppBskyEmbedImages.Main(images=embed_images),
+            labels=labels,
             langs=langs,
             facets=facets,
         )
@@ -166,9 +172,7 @@ class ExpandedClient(Client):
         video_alt: t.Optional[str] = None,
         profile_identify: t.Optional[str] = None,
         reply_to: t.Optional['models.AppBskyFeedPost.ReplyRef'] = None,
-        labels: t.Optional[
-        te.Annotated[t.Union['models.ComAtprotoLabelDefs.SelfLabels'], Field(discriminator='py_type')]
-        ] = None,
+        labels: t.Optional[t.List[str]] = None,
         langs: t.Optional[t.List[str]] = None,
         facets: t.Optional[t.List['models.AppBskyRichtextFacet.Main']] = None,
         video_aspect_ratio: t.Optional['models.AppBskyEmbedDefs.AspectRatio'] = None,
@@ -205,5 +209,6 @@ class ExpandedClient(Client):
             reply_to=reply_to,
             embed=models.AppBskyEmbedVideo.Main(video=upload.blob, alt=video_alt, aspect_ratio=video_aspect_ratio),
             langs=langs,
+            labels=labels,
             facets=facets,
         )
