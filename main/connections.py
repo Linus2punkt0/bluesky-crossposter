@@ -1,11 +1,11 @@
 import tweepy, traceback, requests
 from mastodon import Mastodon
-from atproto import Client, Session, SessionEvent
+from atproto import Session, SessionEvent
 from main.functions import logger
+from main.expanded_client import ExpandedClient
 from settings.auth import *
-from settings.paths import session_cache_path, rate_limit_path
-from settings import settings
-import arrow, os
+from settings.paths import session_cache_path
+import  os
 
 # Connection to Mastodon API
 def mastodon_connect():
@@ -51,7 +51,7 @@ def bsky_connect():
         return bsky_connect._connection
     try:
         logger.info(f'Connecting to Bluesky: {BSKY_PDS}.')
-        bsky_connect._connection = RateLimitedClient(BSKY_PDS)
+        bsky_connect._connection = ExpandedClient(BSKY_PDS)
         # In order to not be ratelimited, session is cached in a session file.
         bsky_connect._connection.on_session_change(on_session_change)
         session = session_cache_read()
@@ -59,7 +59,7 @@ def bsky_connect():
         # regular login
         try:
             logger.info("Connecting to Bluesky using saved session.")
-            bluesky_clbsky_connect._connectionient.login(session_string=session)
+            bsky_connect._connectionient.login(session_string=session)
             logger.info("Successfully logged in to Bluesky using saved session.")
         except:
             logger.info("Creating new Bluesky session using password and username.")
@@ -78,25 +78,7 @@ def bsky_connect():
         exit()
 
 
-# A wrapper class for the atproto client that allows us to get ratelimit info
-class RateLimitedClient(Client):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
 
-        self._limit = self._remaining = self._reset = None
-
-    def get_rate_limit(self):
-        return self._limit, self._remaining, self._reset
-
-    def _invoke(self, *args, **kwargs):
-        self.response = super()._invoke(*args, **kwargs)
-        if not self.response.headers.get("RateLimit-Limit"):
-            return self.response
-        self._limit = self.response.headers.get("RateLimit-Limit")
-        self._remaining = self.response.headers.get("RateLimit-Remaining")
-        self._reset = self.response.headers.get("RateLimit-Reset")
-
-        return self.response
     
     # Function for fetching the user a post is a reply to
     def get_reply_to_user(self, reply):

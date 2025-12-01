@@ -18,6 +18,7 @@ class Post():
         #     "media": None,
         #     "language": None,
         #     "privacy": None,
+        #     "sensitive": False,
         #     "repost": None,
         #     "created_at": None,
         # }
