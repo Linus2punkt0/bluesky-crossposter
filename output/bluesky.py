@@ -94,6 +94,8 @@ def post(item):
                                 images=images,
                                 image_alts=image_alts,
                                 image_aspect_ratios=aspect_ratios,
+                                labels=labels,
+                                langs=item["post"].info["language"],
                                 reply_to=reply_to
                             )
                         )
@@ -113,7 +115,9 @@ def post(item):
                             bluesky_post,
                             video=video,
                             video_alt=video_data["alt"],
-                            video_aspect_ratio=aspect_ratio
+                            video_aspect_ratio=aspect_ratio,
+                            labels=labels,
+                            langs=item["post"].info["language"]
                         )
                     )
             # Emptying media array after posting
@@ -125,7 +129,9 @@ def post(item):
                 bluesky_client.send_post(
                     bluesky_post,
                     reply_to=reply_to,
-                    embed=embed
+                    embed=embed,
+                    labels=labels,
+                    langs=item["post"].info["language"]
                 )
             )
         # No root_ref it means the post is the start of the thread, i.e. the root.
