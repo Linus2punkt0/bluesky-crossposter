@@ -116,6 +116,8 @@ def get_posts():
                 text = text.replace(quote_url, "")
         # Checking who is allowed to reply to the post
         privacy_setting = get_privacy(status.post.threadgate)
+        # Checking if post has content warnings
+        sensitive = get_sensitive(status.post.record)
         # Fetching images and video if there are any in the post
         image_data = ""
         video_data = {}
@@ -148,6 +150,7 @@ def get_posts():
             "quote_id": quoted_id,
             "quote_url": quote_url,
             "media": media,
+            "sensitive": sensitive,
             "language": status.post.record.langs,
             "privacy": privacy_setting,
             "repost": repost,
@@ -193,6 +196,14 @@ def get_privacy(threadgate):
             logger.debug(threadgate)
             return "public"
 
+def get_sensitive(record):
+    if not hasattr(record, "labels") or not record.labels:
+        return False
+    logger.info(f"Found labels on post: {record.labels.values}")
+    for label in record.labels.values:
+        if label.val in ["graphic-media", "sexual", "porn", "nudity"]:
+            return True
+    return False
 
 # Function for restoring shortened URLS
 def restore_urls(record):

@@ -44,6 +44,10 @@ def post(item):
     reply = False
     if item["type"] == "reply":
         reply = True
+    # Bluesky has multiple options for sensitive media, but Mastodon only has the one, so "graphic-media" is used as a catchall.
+    labels = []
+    if item["post"].info["sensitive"]:
+        labels.append("graphic-media")
     for text_post in text_content:
         logger.info(f"Posting \"{text_post}\" to Bluesky")
         # If post contains a single URL, attempting to create a link preview (or repost, if link is to a Bluesky post)
@@ -80,16 +84,26 @@ def post(item):
             aspect_ratios = []
             for media_item in media:
                 with open(media_item["filename"], 'rb') as f:
-                    images.append(f.read())
-                image_alts.append(media_item["alt"])
+                    img_data = f.read()
+                    if img_data and sys.getsizeof(img_data) > 976560:
+                        logger.warning(f"Preview image too large to post ({sys.getsizeof(img_data)} is larger than max size 976560)")
+                        img_data = limit_img_size(img_data, 976560)
+                    images.append(img_data)
+                # If image alt is None, instead append empty string
+                if not media_item["alt"]:
+                    image_alts.append("")
+                else:
+                    image_alts.append(media_item["alt"])
                 aspect_ratios.append(get_aspect_ratio(media_item["filename"], "image"))
-            logger.debug(f"bluesky_client.send_images({bluesky_post}, images={images}, image_alts={image_alts}, image_aspect_ratios={aspect_ratios},reply_to={reply_to})")
+            logger.debug(f"bluesky_client.send_images({bluesky_post}, images={media}, image_alts={image_alts}, image_aspect_ratios={aspect_ratios},labels={labels},langs={item["post"].info["language"]},reply_to={reply_to})")
             reply_ref = models.create_strong_ref(
                             bluesky_client.send_images(
                                 bluesky_post,
                                 images=images,
                                 image_alts=image_alts,
                                 image_aspect_ratios=aspect_ratios,
+                                labels=labels,
+                                langs=item["post"].info["language"],
                                 reply_to=reply_to
                             )
                         )
@@ -103,25 +117,29 @@ def post(item):
             with open(video_data["filename"], 'rb') as f:
                 video = f.read()
             aspect_ratio = get_aspect_ratio(video_data["filename"], "video")
-            logger.debug(f"bluesky_client.send_video({bluesky_post},video={video},video_alt={video_data['alt']},video_aspect_ratio={aspect_ratio})")
+            logger.debug(f"bluesky_client.send_video({bluesky_post},video={video},video_alt={video_data['alt']},video_aspect_ratio={aspect_ratio},labels={labels},langs={item["post"].info["language"]})")
             reply_ref = models.create_strong_ref(
                         bluesky_client.send_video(
                             bluesky_post,
                             video=video,
                             video_alt=video_data["alt"],
-                            video_aspect_ratio=aspect_ratio
+                            video_aspect_ratio=aspect_ratio,
+                            labels=labels,
+                            langs=item["post"].info["language"]
                         )
                     )
             # Emptying media array after posting
             media = []
         # Posting regular post (might include media as an embed)
         else:
-            logger.info(f"bluesky_client.send_post({bluesky_post},reply_to={reply_to}")
+            logger.info(f"bluesky_client.send_post({bluesky_post},reply_to={reply_to},labels={labels},langs={item["post"].info["language"]}")
             reply_ref = models.create_strong_ref(
                 bluesky_client.send_post(
                     bluesky_post,
                     reply_to=reply_to,
-                    embed=embed
+                    embed=embed,
+                    labels=labels,
+                    langs=item["post"].info["language"]
                 )
             )
         # No root_ref it means the post is the start of the thread, i.e. the root.
@@ -281,7 +299,7 @@ def create_embed(url, media, media_type):
         return None
 
 def limit_img_size(image_data, target_filesize):
-    logger.info("Attempting to reduce size of preview image")
+    logger.info("Attempting to reduce size of image")
     try:
         img = img_orig = Image.open(io.BytesIO(image_data))
         aspect = img.size[0] / img.size[1]
