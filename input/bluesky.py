@@ -12,6 +12,9 @@ from main.db import database
 
 def get_posts():
     bsky = bsky_connect()
+    if not bsky:
+        logger.error("Could not connect to Bluesky.")
+        return
     logger.info("Gathering posts from Bluesky")
     posts = []
     # Getting feed of user
