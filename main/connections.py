@@ -75,9 +75,9 @@ def bsky_connect():
         return bsky_connect._connection
     except Exception as e:
         logger.error(e)
-        if e.response.content.error == "RateLimitExceeded":
+        if e.response and e.response.content.error == "RateLimitExceeded":
             logger.debug("Bluesky ratelimit was exceeded!")
-        elif e.response.content.error == "ExpiredToken":
+        elif e.response and e.response.content.error == "ExpiredToken":
             logger.info("Session expired, removing session file.")
             os.remove(session_cache_path)
         else:
