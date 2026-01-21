@@ -7,11 +7,14 @@ from main.db import database
 
 
 def get_posts():
-    logger.info("Gathering posts from Mastodon")
-    posts = []
     mastodon = mastodon_connect()
+    if not mastodon:
+        logger.error("Could not connect to Mastodon.")
+        return
+    logger.info("Gathering posts from Mastodon")
     user_id = mastodon.me()["id"]
     statuses = mastodon.account_statuses(user_id)
+    posts = []
     for status in statuses:
         logger.trace(status)
         post_id = str(status.id)

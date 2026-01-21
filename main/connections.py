@@ -9,15 +9,20 @@ import  os
 
 # Connection to Mastodon API
 def mastodon_connect():
-    if hasattr(mastodon_connect, "_connection"):
-        logger.info("Already connected to Mastodon API.")
+    try:
+        if hasattr(mastodon_connect, "_connection"):
+            logger.info("Already connected to Mastodon API.")
+            return mastodon_connect._connection
+        logger.info("Connecting to Mastodon API.")
+        mastodon_connect._connection = Mastodon(
+            access_token = MASTODON_TOKEN,
+            api_base_url = MASTODON_INSTANCE
+        ) 
         return mastodon_connect._connection
-    logger.info("Connecting to Mastodon API.")
-    mastodon_connect._connection = Mastodon(
-        access_token = MASTODON_TOKEN,
-        api_base_url = MASTODON_INSTANCE
-    ) 
-    return mastodon_connect._connection
+    except Exception as e:
+        logger.error(e)
+        logger.debug(traceback.format_exc())
+        return None
 
 # Twitter has two different API methods, and both are needed.
 
@@ -70,12 +75,14 @@ def bsky_connect():
         return bsky_connect._connection
     except Exception as e:
         logger.error(e)
-        if e.response.content.error == "RateLimitExceeded":
+        if e.response and e.response.content.error == "RateLimitExceeded":
             logger.debug("Bluesky ratelimit was exceeded!")
-        elif e.response.content.error == "ExpiredToken":
+        elif e.response and e.response.content.error == "ExpiredToken":
             logger.info("Session expired, removing session file.")
             os.remove(session_cache_path)
-        exit()
+        else:
+            logger.debug(traceback.format_exc())
+        return None
 
 
 
