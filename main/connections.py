@@ -64,7 +64,7 @@ def bsky_connect():
         # regular login
         try:
             logger.info("Connecting to Bluesky using saved session.")
-            bsky_connect._connectionient.login(session_string=session)
+            bsky_connect._connection.login(session_string=session)
             logger.info("Successfully logged in to Bluesky using saved session.")
         except:
             logger.info("Creating new Bluesky session using password and username.")
