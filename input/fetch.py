@@ -14,6 +14,9 @@ def get_posts():
         posts = mastodon.get_posts()
     else:
         logger.error(f"Unknown input source: {settings.input_source}")
+    if not posts:
+        logger.warning("No posts found from input.")
+        exit()
     # Getting queues for all active outputs
     queues = {}
     for output in get_outputs():
