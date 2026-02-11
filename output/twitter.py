@@ -62,7 +62,7 @@ def post(item):
                     filename = limit_gif_size(filename, 15728640)
                 alt = media_item["alt"]
                 # Abiding by alt character limit
-                if len(alt) > 1000:
+                if alt and len(alt) > 1000:
                     alt = alt[:996] + "..."
                 logger.info(f'Uploading media {filename}, chunked={chunked}, media_category={media_category}')
                 res = twitter_api.media_upload(filename, chunked=chunked, media_category=media_category)
