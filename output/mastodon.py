@@ -73,7 +73,7 @@ def post(item):
             if media_item["type"] == "GIF":
                 filename = limit_gif_size(filename, 16000000)
             logger.info(f"Uploading media {filename} with alt: {alt} to mastodon")
-            res = mastodon_client.media_post(filename, description=media_item["alt"], synchronous=True)
+            res = mastodon_client.media_post(filename, description=alt, synchronous=True)
             media_ids.append(res.id)
     for text_post in text_content:
         logger.info(f"Posting \"{text_post}\" to Mastodon")
