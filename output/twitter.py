@@ -87,9 +87,9 @@ def post(item):
         quote_id = None
         reply_id = content["data"]["id"]
         # Checking remaining ratelimit and ratelimit reset time
-        remaining_ratelimit = int(a.headers["x-app-limit-24hour-remaining"])
+        remaining_ratelimit = int(a.headers["x-rate-limit-remaining"])
         logger.info(f"{remaining_ratelimit} posts remaining until twitter ratelimit is reached")
-        reset_time = int(a.headers["x-app-limit-24hour-reset"])
+        reset_time = int(a.headers["x-rate-limit-reset"])
         if remaining_ratelimit < 1:
             logger.info("Twitter ratelimit has been reached.")
             set_ratelimit_reset(reset_time)
