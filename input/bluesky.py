@@ -85,6 +85,9 @@ def get_posts():
         # Checking if post is regular reply
         if status.post.record.reply:
             reply_id = status.post.record.reply.parent.cid
+            if status.reply.parent.not_found:
+                logger.info(f"Parent status {reply_id} seems to be deleted. Skipping post.")
+                continue
             # Poster will try to fetch reply to-username the "ordinary" way, 
             # and if it fails, it will try getting the entire thread and
             # finding it that way
