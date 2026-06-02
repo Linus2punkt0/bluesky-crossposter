@@ -65,15 +65,15 @@ class Post():
             filename = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
             # Attempting to get the correct file ending from the image url. 
             # This is not strictly necessary so if it fails the image is downloaded with no file ending.
-            file_ending = f".{image["url"].split("?")[0].split(".")[-1]}"
+            file_ending = f".{image['url'].split('?')[0].split('.')[-1]}"
             if len(file_ending) > 5:
-                file_ending = f".{file_ending.split("@")[-1]}"
+                file_ending = f".{file_ending.split('@')[-1]}"
             if len(file_ending) > 5:
                 file_ending = ""
             filename = f"{image_path}{filename}{file_ending}" 
-            logger.info(f"Downloading image from {image["url"]} as {filename}")
+            logger.info(f"Downloading image from {image['url']} as {filename}")
             # Downloading fullsize version of image
-            urllib.request.urlretrieve(image["url"], filename)
+            urllib.request.urlretrieve(image['url'], filename)
             # Checking the image type, mostly to see if it is a gif.
             local_image = Image.open(filename)
             # Saving image info in a dictionary and adding it to the list.

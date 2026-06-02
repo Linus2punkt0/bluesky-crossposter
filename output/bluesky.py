@@ -95,7 +95,7 @@ def post(item):
                 else:
                     image_alts.append(media_item["alt"])
                 aspect_ratios.append(get_aspect_ratio(media_item["filename"], "image"))
-            logger.debug(f"bluesky_client.send_images({bluesky_post}, images={media}, image_alts={image_alts}, image_aspect_ratios={aspect_ratios},labels={labels},langs={item["post"].info["language"]},reply_to={reply_to})")
+            logger.debug(f"bluesky_client.send_images({bluesky_post}, images={media}, image_alts={image_alts}, image_aspect_ratios={aspect_ratios},labels={labels},langs={item['post'].info['language']},reply_to={reply_to})")
             reply_ref = models.create_strong_ref(
                             bluesky_client.send_images(
                                 bluesky_post,
@@ -117,7 +117,7 @@ def post(item):
             with open(video_data["filename"], 'rb') as f:
                 video = f.read()
             aspect_ratio = get_aspect_ratio(video_data["filename"], "video")
-            logger.debug(f"bluesky_client.send_video({bluesky_post},video={video},video_alt={video_data['alt']},video_aspect_ratio={aspect_ratio},labels={labels},langs={item["post"].info["language"]})")
+            logger.debug(f"bluesky_client.send_video({bluesky_post},video={video},video_alt={video_data['alt']},video_aspect_ratio={aspect_ratio},labels={labels},langs={item['post'].info['language']})")
             reply_ref = models.create_strong_ref(
                         bluesky_client.send_video(
                             bluesky_post,
@@ -132,7 +132,7 @@ def post(item):
             media = []
         # Posting regular post (might include media as an embed)
         else:
-            logger.info(f"bluesky_client.send_post({bluesky_post},reply_to={reply_to},labels={labels},langs={item["post"].info["language"]}")
+            logger.info(f"bluesky_client.send_post({bluesky_post},reply_to={reply_to},labels={labels},langs={item['post'].info['language']}")
             reply_ref = models.create_strong_ref(
                 bluesky_client.send_post(
                     bluesky_post,

@@ -72,7 +72,7 @@ def split_text(text, service):
     # Twitter has some over eager URL handling that needs to be accounted for
     potential_urls = re.findall(r" [a-z0-9.]*\.[a-z0-9]{2,30}[.,!?]{0,3} ", f" {text.lower()} ")
     if service == "twitter" and potential_urls:
-        logger.info(f"Found following strings that Twitter might interpret as URLS: {", ".join(potential_urls)}")
+        logger.info(f"Found following strings that Twitter might interpret as URLS: {', '.join(potential_urls)}")
         urls = find_mistaken_urls(potential_urls, service)
     if check_length(text, service, urls):
         return [text]
@@ -196,7 +196,7 @@ def check_length(string, service, urls):
     string_length = len(string)
     for url in urls:
         if url["url"] in string.lower():
-            logger.debug(f"Accounting for delta of {url["delta"]} caused by {url["url"]}")
+            logger.debug(f"Accounting for delta of {url['delta']} caused by {url['url']}")
             string_length += url["delta"]
     for character in service_parameters[service]["spec_chars"]:
         instances = string.count(character["char"])
