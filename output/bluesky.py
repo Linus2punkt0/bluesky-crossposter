@@ -132,7 +132,7 @@ def post(item):
             media = []
         # Posting regular post (might include media as an embed)
         else:
-            logger.info(f"bluesky_client.send_post({bluesky_post},reply_to={reply_to},labels={labels},langs={item["post"].info["language"]}")
+            logger.info(f"bluesky_client.send_post({bluesky_post},reply_to={reply_to},labels={labels},langs={item['post'].info['language']}")
             reply_ref = models.create_strong_ref(
                 bluesky_client.send_post(
                     bluesky_post,
