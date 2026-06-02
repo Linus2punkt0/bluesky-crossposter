@@ -196,7 +196,7 @@ def check_length(string, service, urls):
     string_length = len(string)
     for url in urls:
         if url["url"] in string.lower():
-            logger.debug(f"Accounting for delta of {url["delta"]} caused by {url["url"]}")
+            logger.debug(f"Accounting for delta of {url['delta']} caused by {url['url']}")
             string_length += url["delta"]
     for character in service_parameters[service]["spec_chars"]:
         instances = string.count(character["char"])
