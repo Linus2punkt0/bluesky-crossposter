@@ -129,6 +129,8 @@ def get_posts():
         video_data = {}
         if status.post.embed and hasattr(status.post.embed, "images"):
             image_data = status.post.embed.images
+        elif status.post.embed and hasattr(status.post.embed, "items"):
+            image_data = status.post.embed.items
         elif status.post.embed and hasattr(status.post.embed, "media") and hasattr(status.post.embed.media, "images"):
             image_data = status.post.embed.media.images
         elif  status.post.record.embed and (hasattr(status.post.record.embed, "video") \
