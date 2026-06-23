@@ -80,12 +80,21 @@ def post(item):
         # API won't handle leading spaces. Tricking it by replacing the first leading space with a no-break space.
         if text_post.startswith(" "):
             text_post = text_post.replace(" ", "\u00A0", 1)
-        logger.debug(f"mastodon_client.status_post({text_post}, in_reply_to_id={reply_to_post}, media_ids={media_ids}, visibility={visibility}, language={language}), sensitive={item['post'].info['sensitive']}")
-        a = mastodon_client.status_post(text_post, in_reply_to_id=reply_to_post, media_ids=media_ids, visibility=visibility, language=language, sensitive=item["post"].info["sensitive"])
+        logger.debug(f"mastodon_client.status_post({text_post}, in_reply_to_id={reply_to_post}, media_ids={media_ids[:4]}, visibility={visibility}, language={language}), sensitive={item['post'].info['sensitive']}")
+        a = mastodon_client.status_post(text_post, in_reply_to_id=reply_to_post, media_ids=media_ids[:4], visibility=visibility, language=language, sensitive=item["post"].info["sensitive"])
         logger.debug(a)
         reply_to_post = a["id"]
         # setting media ids to empty to not end up posting the media in every post in the thread
-        media_ids = []
+        media_ids = media_ids[4:]
+        database.update(item["id"], "mastodon", a["id"])
+    while media_ids:
+        logger.info(f"Posting additional images to Mastodon")
+        logger.debug(f"mastodon_client.status_post('', in_reply_to_id={reply_to_post}, media_ids={media_ids[:4]}, visibility={visibility}, language={language}), sensitive={item['post'].info['sensitive']}")
+        a = mastodon_client.status_post("", in_reply_to_id=reply_to_post, media_ids=media_ids[:4], visibility=visibility, language=language, sensitive=item["post"].info["sensitive"])
+        logger.debug(a)
+        reply_to_post = a["id"]
+        # setting media ids to empty to not end up posting the media in every post in the thread
+        media_ids = media_ids[4:]
         database.update(item["id"], "mastodon", a["id"])
     logger.info("Posted to mastodon")
 
