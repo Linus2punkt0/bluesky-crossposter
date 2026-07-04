@@ -29,11 +29,13 @@ def get_posts():
             continue
         # Checking if the post has "indexe_at" set, meaning it is a repost.
         repost = False
-        created_at = get_date(status.post.record.created_at.split(".")[0])
+        raw_created_at = status.post.record.created_at
+        created_at = get_date(raw_created_at.split(".")[0])
         logger.debug(f'Post created at: {created_at}')
         if hasattr(status.reason, "indexed_at"):
             repost = True
-            created_at = get_date(status.reason.indexed_at.split(".")[0])
+            raw_created_at = status.reason.indexed_at
+            created_at = get_date(raw_created_at.split(".")[0])
         # Checking if post is outside time limit
         if not created_at > database.get_post_time_limit():
             logger.info(f'Post {post_id} posted outside time limit.')
@@ -162,11 +164,12 @@ def get_posts():
             "language": status.post.record.langs,
             "privacy": privacy_setting,
             "repost": repost,
-            "created_at": created_at
+            "created_at": created_at,
+            "raw_created_at": raw_created_at
         }
         logger.debug(post_info)
         posts.append(post_info)
-    posts = sorted(posts, key=lambda d: d['created_at'])
+    posts = sorted(posts, key=lambda d: d['raw_created_at'])
     post_dict = {}
     for post in posts:
         post_dict[post["post_id"]] = Post(post)
