@@ -1,6 +1,7 @@
 import arrow, html, re
 import settings.settings as settings
-from main.functions import logger, extract_urls, clean_html
+from main.functions import extract_urls, clean_html
+from main.logging import logger
 from main.connections import mastodon_connect
 from main.post import Post
 from main.db import database

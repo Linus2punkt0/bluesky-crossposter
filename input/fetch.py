@@ -1,7 +1,8 @@
 import arrow
 from copy import deepcopy
 from settings import settings
-from main.functions import logger, get_outputs
+from main.functions import get_outputs
+from main.logging import logger
 from input import bluesky, mastodon
 from main.db import database
 
@@ -15,8 +16,8 @@ def get_posts():
     else:
         logger.error(f"Unknown input source: {settings.input_source}")
     if not posts:
-        logger.warning("No posts found from input.")
-        exit()
+        logger.info("No posts found from input.")
+        return
     # Getting queues for all active outputs
     queues = {}
     for output in get_outputs():

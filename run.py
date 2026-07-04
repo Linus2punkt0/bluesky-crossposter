@@ -1,5 +1,6 @@
 import traceback
-from main.functions import logger, cleanup
+from main.functions import cleanup
+from main.logging import logger, summary
 from input.fetch import get_posts
 from output.send import send_posts
 from main.db import database
@@ -10,15 +11,19 @@ def run():
     except Exception as e:
         logger.error(f"Could not fetch posts: {e}")
         logger.debug(traceback.format_exc())
+        summary()
         exit()
     # If no new or deleted posts are found, we can skip further actions.
     if (not queues or not new_posts(queues)) and not database.deleted:
         logger.info("No new posts or newly deleted posts found.")
+        summary()
         exit()
     logger.debug(f"Found posts {queues}")
     send_posts(queues)
     database.save()
     cleanup()
+    summary()
+    logger.info("Finished.")
 
 # Checking queues to see if they contain posts
 def new_posts(queues):

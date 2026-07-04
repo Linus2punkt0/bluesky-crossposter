@@ -1,7 +1,7 @@
 import tweepy, traceback, requests
 from mastodon import Mastodon
 from atproto import Session, SessionEvent
-from main.functions import logger
+from main.logging import logger
 from main.expanded_client import ExpandedClient
 from settings.auth import *
 from settings.paths import session_cache_path

@@ -1,5 +1,5 @@
-import  os, shutil, re, sys, traceback, requests, math
-from loguru import logger
+import  os, shutil, re, traceback, requests, math
+from main.logging import logger
 from PIL import Image, ImageSequence
 from settings.auth import *
 from settings.paths import *
@@ -7,16 +7,6 @@ from settings import settings
 from main.service_parameters import service_parameters
 
 
-
-
-# Setting up logging
-logger.remove()
-log_format = "<yellow>{time:YYYY-MM-DD HH:mm:ss}</yellow> <lvl>[{level}]: {message}</lvl> <yellow>({function} {file}:{line})</yellow>"
-logger.add(sys.stdout, format=log_format, level=settings.log_level)
-logger.add("%s/crossposter_{time:YYMMDD}.log" % log_path,
-        level=settings.log_level,
-        format=log_format, 
-        rotation="00:00", retention="1 week")
 
 # Getting queues for all active outputs, excluding the input
 def get_outputs():

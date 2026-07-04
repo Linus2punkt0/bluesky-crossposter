@@ -1,5 +1,6 @@
 import traceback, arrow, json, tweepy
-from main.functions import logger, limit_gif_size
+from main.functions import limit_gif_size
+from main.logging import logger
 from main.connections import twitter_api_connect, twitter_client_connect
 from settings.auth import *
 from settings import settings

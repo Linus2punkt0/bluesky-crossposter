@@ -12,3 +12,4 @@ settings/*.py
 auth.py
 .venv
 test.py
+status.csv

@@ -1,5 +1,6 @@
 from copy import deepcopy
-from main.functions import logger, split_text
+from main.functions import split_text
+from main.logging import logger
 from settings.paths import image_path
 from PIL import Image
 import random, string, urllib, requests

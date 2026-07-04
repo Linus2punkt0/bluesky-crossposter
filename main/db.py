@@ -3,7 +3,7 @@ from settings.paths import *
 from main.post import Post
 from main.functions import count_lines, get_outputs
 from settings import settings
-from main.functions import logger
+from main.logging import logger
 
 
 # Post database class

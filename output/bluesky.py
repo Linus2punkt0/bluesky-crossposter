@@ -4,7 +4,7 @@ from PIL import Image
 from operator import itemgetter
 from atproto import  models, client_utils, AtUri, IdResolver
 from linkpreview import link_preview
-from main.functions import logger
+from main.logging import logger
 from main.connections import bsky_connect
 from main.db import database
 from settings import settings

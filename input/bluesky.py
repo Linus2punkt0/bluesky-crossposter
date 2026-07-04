@@ -1,5 +1,5 @@
 import arrow, fnmatch, re
-from main.functions import logger
+from main.logging import logger
 from settings.auth import BSKY_HANDLE
 from settings.paths import *
 from settings import settings
@@ -11,6 +11,7 @@ from main.db import database
 
 
 def get_posts():
+    logger.debug(BSKY_HANDLE)
     bsky = bsky_connect()
     if not bsky:
         logger.error("Could not connect to Bluesky.")

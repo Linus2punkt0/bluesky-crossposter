@@ -1,5 +1,6 @@
 import traceback
-from main.functions import logger, limit_gif_size
+from main.functions import limit_gif_size
+from main.logging import logger
 from main.connections import mastodon_connect
 from settings.auth import MASTODON_HANDLE, MASTODON_INSTANCE
 from settings import settings
