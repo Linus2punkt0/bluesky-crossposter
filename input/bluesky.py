@@ -29,11 +29,11 @@ def get_posts():
             continue
         # Checking if the post has "indexe_at" set, meaning it is a repost.
         repost = False
-        created_at = get_date(status.post.record.created_at.split(".")[0])
+        created_at = get_date(status.post.record.created_at)
         logger.debug(f'Post created at: {created_at}')
         if hasattr(status.reason, "indexed_at"):
             repost = True
-            created_at = get_date(status.reason.indexed_at.split(".")[0])
+            created_at = get_date(status.reason.indexed_at)
         # Checking if post is outside time limit
         if not created_at > database.get_post_time_limit():
             logger.info(f'Post {post_id} posted outside time limit.')
