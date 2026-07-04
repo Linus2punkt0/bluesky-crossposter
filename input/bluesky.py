@@ -30,7 +30,7 @@ def get_posts():
         # Checking if the post has "indexe_at" set, meaning it is a repost.
         repost = False
         created_at = arrow.get(status.post.record.created_at)
-        logger.debug(f'Post created at: {created_at.humanize()}')
+        logger.debug(f'Post created at: {created_at.format("YYYY-MM-DD HH:mm:ss")}')
         if hasattr(status.reason, "indexed_at"):
             repost = True
             created_at = arrow.get(status.reason.indexed_at)
