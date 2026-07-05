@@ -22,7 +22,7 @@ logger.add(count_sink)
 
 def summary():
     logger.debug(f"Run summary: Warnings:{counts["WARNING"]}, Errors:{counts["ERROR"]}")
-    status_file = f"{log_path}status.csv"
+    status_file = f"{status_page_path}status.json"
     status_history = []
     if os.path.isfile(status_file):
         with open(status_file, 'r') as file:

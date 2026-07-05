@@ -39,3 +39,4 @@ services:
     volumes:
       - ./dbhost:/db
       - ./backup:/backup
+      - ./status:/status
