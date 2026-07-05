@@ -30,11 +30,11 @@ def get_posts():
             continue
         # Checking if the post has "indexe_at" set, meaning it is a repost.
         repost = False
-        created_at = get_date(status.post.record.created_at.split(".")[0])
-        logger.debug(f'Post created at: {created_at}')
+        created_at = arrow.get(status.post.record.created_at)
+        logger.debug(f'Post created at: {created_at.format("YYYY-MM-DD HH:mm:ss")}')
         if hasattr(status.reason, "indexed_at"):
             repost = True
-            created_at = get_date(status.reason.indexed_at.split(".")[0])
+            created_at = arrow.get(status.reason.indexed_at)
         # Checking if post is outside time limit
         if not created_at > database.get_post_time_limit():
             logger.info(f'Post {post_id} posted outside time limit.')
@@ -172,16 +172,6 @@ def get_posts():
     for post in posts:
         post_dict[post["post_id"]] = Post(post)
     return post_dict
-
-
-# Sometimes the date string is given in a different format, this is dealt with here.
-def get_date(date_string):
-    date_in_format = 'YYYY-MM-DDTHH:mm:ss'
-    try:
-        date = arrow.get(date_string, date_in_format)
-    except:
-        date = arrow.get(date_string, date_in_format+"ZZ")
-    return date
 
 
 def get_privacy(threadgate):
