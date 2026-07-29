@@ -1,5 +1,7 @@
 #!/bin/bash
 
+python status/server.py
+
 # Run once per hour if nothing else has been specified in environment variables
 while :; do
   python run.py

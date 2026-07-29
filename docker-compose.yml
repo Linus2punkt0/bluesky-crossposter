@@ -40,3 +40,6 @@ services:
       - ./dbhost:/db
       - ./backup:/backup
       - ./status:/status
+    ports:
+      - 8080:8080
+

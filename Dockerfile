@@ -10,6 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source to app directory
 COPY . .
 
+EXPOSE 8080
+
 # Move config stubs
 RUN find /settings -iname '*.txt' -exec bash -c 'mv -- "$1" "${1%.txt}.py"' bash {} \;
 

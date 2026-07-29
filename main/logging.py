@@ -27,9 +27,10 @@ def summary():
     if os.path.isfile(status_file):
         with open(status_file, 'r') as file:
             try:
-                status_history = json.loads(file)
-            except:
+                status_history = json.load(file)
+            except Exception as e:
                 logger.warning("Unable to read status history.")
+                logger.debug(e)
     status_history = [
         item for item in status_history
         if arrow.get(item["datetime"]) >= arrow.utcnow().shift(hours = -24)
