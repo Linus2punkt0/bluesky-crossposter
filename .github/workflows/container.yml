@@ -4,10 +4,8 @@ on:
   push:
     branches:
       - main
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+    tags:
+      - "v*"
 
 permissions:
   contents: read
@@ -28,6 +26,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: set lower case repo
+        run: |
+          echo "REPO_LC=${REPO,,}" >>${GITHUB_ENV}
+        env:
+          REPO: '${{ github.repository }}'
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
@@ -37,8 +41,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          image_name: ${{ github.repository }}  # it will be lowercased internally
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ REPO_LC }}:latest
+            ghcr.io/${{ REPO_LC }}:${{ github.sha }}
