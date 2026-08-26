@@ -20,7 +20,8 @@ def mastodon_connect():
         ) 
         return mastodon_connect._connection
     except Exception as e:
-        logger.error(e)
+        logger.error("Could not connecto to Mastodon API.")
+        logger.debug(e)
         logger.debug(traceback.format_exc())
         return None
 
@@ -74,13 +75,14 @@ def bsky_connect():
         session_cache_write(session)
         return bsky_connect._connection
     except Exception as e:
-        logger.error(e)
         if e.response and e.response.content.error == "RateLimitExceeded":
-            logger.debug("Bluesky ratelimit was exceeded!")
+            logger.error("Bluesky ratelimit was exceeded.")
         elif e.response and e.response.content.error == "ExpiredToken":
             logger.info("Session expired, removing session file.")
             os.remove(session_cache_path)
         else:
+            logger.error("Could not connect to Bluesky.")
+            logger.debug(e)
             logger.debug(traceback.format_exc())
         return None
 
