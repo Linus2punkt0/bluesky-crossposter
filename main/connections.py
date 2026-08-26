@@ -20,7 +20,7 @@ def mastodon_connect():
         ) 
         return mastodon_connect._connection
     except Exception as e:
-        logger.error("Could not connecto to Mastodon API.")
+        logger.error("Could not connect to to Mastodon API.")
         logger.debug(e)
         logger.debug(traceback.format_exc())
         return None
