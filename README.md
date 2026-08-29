@@ -1,10 +1,10 @@
 The Bluesky Crossposter is a python application that automatically takes post from one service (Bluesky or Mastodon) and posts them to one or more other services (Bluesky, Mastodon and/or Twitter). The application can handle posts, threads, quote posts*, reposts**, deletes, media (including alt text) and privacy settings***
 
-**Quote posts only work fully on your own posts, as other's posts don't necessarily exist on the target service. Otherwise posts will be sent as a post with an included link (if enabled in settings). They also don't work on Mastoon, since Mastodon doesn't have a quote post function, so there they will be converted to replies (if qoute of yourself) or a post with a url (if quote of someone else).*
+**Quote posts only work fully on your own posts, as other's posts don't necessarily exist on the target service. Otherwise posts will be sent as a post with an included link (if enabled in settings). They also don't work on Mastodon, since Mastodon doesn't have a quote post function, so there they will be converted to replies (if quote of yourself) or a post with a url (if quote of someone else).*
 
 ***Reposts on twitter are disabled by default as this requires the paid version of the API*
 
-****More information futher down.*
+****More information further down.*
 
 # Setup
 

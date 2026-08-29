@@ -51,7 +51,7 @@ max_retries = 5
 # period will be posted.
 # Accepted values: Integers greater than 0
 post_time_limit = 12
-# max_per_hour limits the amount of posts that can be crossposted withing an hour. 0 means no limit.
+# max_per_hour limits the amount of posts that can be crossposted within an hour. 0 means no limit.
 # Accepted values: Any integer
 max_per_hour = 0
 # overflow_posts determines what happens to posts that are not crossposted due to the hourly limit.
