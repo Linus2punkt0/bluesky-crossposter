@@ -26,7 +26,7 @@ def get_outputs():
             services.append(output)
     return services
 
-# Extracing URLs from string
+# Extracting URLs from string
 def extract_urls(string):
     regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
     url = re.findall(regex, string)
@@ -104,7 +104,7 @@ def split_text(text, service):
     return posts
 
 
-# If a paragraph is too long, it is split into sentances
+# If a paragraph is too long, it is split into sentences
 def split_paragraphs(text, service, urls):
     logger.info("Attempting to split by sentence.")
     posts = []
