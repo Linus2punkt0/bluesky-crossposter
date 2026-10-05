@@ -92,7 +92,11 @@ def get_posts():
             # and if it fails, it will try getting the entire thread and
             # finding it that way
             try:
-                reply_to_user = status.reply.parent.author.handle
+                parent_author = status.reply.parent.author
+                if not hasattr(parent_author, 'handle'):
+                    logger.info(f"Parent post author is blocked. Skipping post {post_id}.")
+                    continue
+                reply_to_user = parent_author.handle
             except:
                 reply_to_user = bsky.get_reply_to_user(status.post.record.reply.parent)
         # If post is a reply to another user, it is skipped
